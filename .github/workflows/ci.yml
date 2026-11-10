@@ -1,0 +1,67 @@
+# CI (constitución §15.3): linter, formato, migraciones y pruebas.
+# Un cambio que falle cualquiera de estos pasos no se integra.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:18
+        env:
+          POSTGRES_DB: loan_service
+          POSTGRES_USER: loan
+          POSTGRES_PASSWORD: loan
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U loan -d loan_service"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      SECRET_KEY: ci-solo-para-pruebas-no-es-un-secreto
+      DEBUG: "False"
+      DATABASE_URL: postgres://loan:loan@localhost:5432/loan_service
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Instalar uv y Python 3.14
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: uv sync --frozen
+
+      - name: Ruff
+        run: uv run ruff check .
+
+      - name: Black
+        run: uv run black --check .
+
+      - name: Migraciones al día
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Django check
+        run: uv run python manage.py check
+
+      - name: Pruebas
+        run: uv run pytest --cov

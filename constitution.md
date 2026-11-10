@@ -74,9 +74,9 @@ Cualquier elemento excluido requiere una enmienda a esta constitución.
 
 | Capa | Tecnología | Notas |
 |---|---|---|
-| Lenguaje | Python 3.12+ | |
-| Framework web | Django 5.x (LTS vigente) | Vistas basadas en plantillas Django (SSR) |
-| Base de datos | PostgreSQL 16+ | Único motor soportado |
+| Lenguaje | Python 3.14+ | Última versión estable (decisión D2) |
+| Framework web | Django 6.1 | Vistas basadas en plantillas Django (SSR). Última versión estable (decisión D2) |
+| Base de datos | PostgreSQL 16+ | Único motor soportado, también en las pruebas. PostgreSQL 18 en Docker y en CI |
 | ORM | Django ORM | No se usa SQL crudo salvo para reportes complejos, documentado |
 | Autenticación | Sistema de autenticación de Django, extendido | Ver Sección 6 |
 | Frontend | HTML, CSS y JavaScript vanilla sobre la referencia suministrada | Sin frameworks SPA |
@@ -84,7 +84,7 @@ Cualquier elemento excluido requiere una enmienda a esta constitución.
 | Pruebas | pytest + pytest-django | Cobertura mínima en Sección 12 |
 | Calidad de código | Black, Ruff, mypy (opcional) | |
 | Contenedores | Docker y docker-compose | Entorno de desarrollo reproducible |
-| Variables de entorno | django-environ o python-decouple | Ningún secreto en el repositorio |
+| Variables de entorno | django-environ | Ningún secreto en el repositorio |
 
 ---
 
@@ -612,7 +612,7 @@ Estas decisiones deben resolverse antes de escribir la spec correspondiente:
 
 ---
 
-*Versión 1.2 · Documento vivo: se actualiza mediante el procedimiento de la Sección 16.4.*
+*Versión 1.3 · Documento vivo: se actualiza mediante el procedimiento de la Sección 16.4.*
 
 ## Registro de enmiendas
 
@@ -620,6 +620,7 @@ Estas decisiones deben resolverse antes de escribir la spec correspondiente:
 |---|---|---|---|---|
 | 1.1 | 2026-11-06 | §5.1, §15.1, §16.1, §16.2 y §16.5 (nueva) | Hacer obligatorio el uso de las skills (`/spec`, `/spec-impl`, `django-patterns`, `frontend-design`) y del MCP `playwright`. Adoptar el formato de spec de la skill (`specs/NN-slug.md`, con el plan dentro de la spec) en lugar de `docs/specs/NNN-nombre/` con tres archivos. | Sebastián Rendón |
 | 1.2 | 2026-11-06 | §13 y §13.1 (nueva) | Hacer obligatorio el uso de la plantilla SB Admin 2 (`references/startbootstrap-sb-admin-2-gh-pages/`) como base de todo el HTML, CSS y JavaScript, con reglas para copiar recursos, personalizar estilos y saber qué página de referencia usar en cada pantalla. | Sebastián Rendón |
+| 1.3 | 2026-11-10 | §4 | Adoptar las últimas versiones estables de Python (3.14+) y Django (6.1) según la decisión D2 de `docs/specs-tentativas.md`, fijar PostgreSQL 18 en Docker y CI (manteniendo el mínimo 16+) y elegir django-environ para las variables de entorno. Se aplica con la SPEC 01 (fundación del proyecto). |  |
 
 
 ## Informacion adicional

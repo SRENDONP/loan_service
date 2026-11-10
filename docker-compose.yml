@@ -1,0 +1,49 @@
+services:
+  web:
+    build: .
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      # Dentro de la red de compose la base de datos es el host "db", puerto 5432.
+      DATABASE_URL: postgres://${POSTGRES_USER:-loan}:${POSTGRES_PASSWORD:-loan}@db:5432/${POSTGRES_DB:-loan_service}
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-loan_service}
+      POSTGRES_USER: ${POSTGRES_USER:-loan}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-loan}
+    ports:
+      # Puerto del host configurable por si ya hay otro PostgreSQL en 5432.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18 guarda los datos en /var/lib/postgresql/18/docker:
+      # el volumen se monta en el directorio padre, no en .../data.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
