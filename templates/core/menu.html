@@ -1,0 +1,39 @@
+{% for section in sections %}
+  {% if not forloop.first %}
+    <!-- Divider -->
+    <hr class="sidebar-divider">
+  {% endif %}
+
+  {% if section.label %}
+    <!-- Heading -->
+    <div class="sidebar-heading">
+      {{ section.label }}
+    </div>
+  {% endif %}
+
+  {% for item in section.items %}
+    {% if item.children %}
+      <!-- Nav Item - Collapse Menu -->
+      <li class="nav-item{% if item.active %} active{% endif %}">
+        <a class="nav-link{% if not item.active %} collapsed{% endif %}" href="#" data-toggle="collapse" data-target="#{{ item.collapse_id }}" aria-expanded="{{ item.active|yesno:'true,false' }}" aria-controls="{{ item.collapse_id }}">
+          <i class="{{ item.icon }}"></i>
+          <span>{{ item.label }}</span>
+        </a>
+        <div id="{{ item.collapse_id }}" class="collapse{% if item.active %} show{% endif %}" data-parent="#accordionSidebar">
+          <div class="bg-white py-2 collapse-inner rounded">
+            {% for child in item.children %}
+              <a class="collapse-item{% if child.active %} active{% endif %}" href="{{ child.url }}"{% if child.active %} aria-current="page"{% endif %}>{{ child.label }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </li>
+    {% else %}
+      <!-- Nav Item -->
+      <li class="nav-item{% if item.active %} active{% endif %}">
+        <a class="nav-link" href="{{ item.url }}"{% if item.active %} aria-current="page"{% endif %}>
+          <i class="{{ item.icon }}"></i>
+          <span>{{ item.label }}</span></a>
+      </li>
+    {% endif %}
+  {% endfor %}
+{% endfor %}

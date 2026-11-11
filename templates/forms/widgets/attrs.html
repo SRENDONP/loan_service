@@ -1,0 +1,4 @@
+{% comment %}
+  Atributos del widget con la clase de Bootstrap (`base_class`) al principio.
+  Agrega `is-invalid` cuando Django marca el campo con aria-invalid.
+{% endcomment %} class="{{ base_class }}{% for name, value in widget.attrs.items %}{% if name == 'aria-invalid' and value %} is-invalid{% elif name == 'class' and value %} {{ value }}{% endif %}{% endfor %}"{% for name, value in widget.attrs.items %}{% if name != 'class' and value is not False %} {{ name }}{% if value is not True %}="{{ value|stringformat:'s' }}"{% endif %}{% endif %}{% endfor %}

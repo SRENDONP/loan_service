@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static i18n datatables %}
+
+{% block title %}{% translate "Componentes" %}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <h1 class="h3 mb-2 text-gray-800">{% translate "Componentes" %}</h1>
+  <p class="mb-4">{% translate "Catálogo de los componentes compartidos de la interfaz, con datos de ejemplo. Solo está disponible en desarrollo." %}</p>
+{% endblock %}
+
+{% block content %}
+
+  <!-- Mensajes -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">{% translate "Mensajes" %}</h6>
+    </div>
+    <div class="card-body">
+      {% include "includes/messages.html" with messages=demo_messages %}
+    </div>
+  </div>
+
+  <div class="row">
+
+    <div class="col-lg-6">
+
+      <!-- Formulario -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">{% translate "Formulario" %}</h6>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'core:components' %}" novalidate>
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">{% translate "Enviar formulario" %}</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-lg-6">
+
+      <!-- Confirmación -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">{% translate "Confirmación" %}</h6>
+        </div>
+        <div class="card-body">
+          <p>{% translate "Este formulario pide confirmación antes de enviarse." %}</p>
+          <form method="post" action="{% url 'core:components' %}" id="confirm-demo-form" data-confirm="{% translate '¿Quieres ejecutar la acción de prueba?' %}" data-confirm-button="{% translate 'Ejecutar' %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="{{ confirm_action }}">
+            <button type="submit" class="btn btn-danger btn-icon-split">
+              <span class="icon text-white-50">
+                <i class="fas fa-exclamation-triangle"></i>
+              </span>
+              <span class="text">{% translate "Ejecutar acción de prueba" %}</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">{% translate "Botones" %}</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary mb-1">{% translate "Principal" %}</button>
+            <button type="button" class="btn btn-secondary mb-1">{% translate "Secundario" %}</button>
+            <button type="button" class="btn btn-success mb-1">{% translate "Éxito" %}</button>
+            <button type="button" class="btn btn-info mb-1">{% translate "Información" %}</button>
+            <button type="button" class="btn btn-warning mb-1">{% translate "Advertencia" %}</button>
+            <button type="button" class="btn btn-danger mb-1">{% translate "Peligro" %}</button>
+            <button type="button" class="btn btn-light mb-1">{% translate "Claro" %}</button>
+          </div>
+          <div class="mb-3">
+            <button type="button" class="btn btn-primary btn-icon-split mb-1">
+              <span class="icon text-white-50"><i class="fas fa-plus"></i></span>
+              <span class="text">{% translate "Crear" %}</span>
+            </button>
+            <button type="button" class="btn btn-success btn-icon-split mb-1">
+              <span class="icon text-white-50"><i class="fas fa-check"></i></span>
+              <span class="text">{% translate "Guardar" %}</span>
+            </button>
+            <button type="button" class="btn btn-secondary btn-icon-split mb-1">
+              <span class="icon text-white-50"><i class="fas fa-arrow-left"></i></span>
+              <span class="text">{% translate "Volver" %}</span>
+            </button>
+          </div>
+          <div>
+            <button type="button" class="btn btn-info btn-circle btn-sm" aria-label="{% translate 'Ver' %}"><i class="fas fa-eye"></i></button>
+            <button type="button" class="btn btn-warning btn-circle btn-sm" aria-label="{% translate 'Editar' %}"><i class="fas fa-pen"></i></button>
+            <button type="button" class="btn btn-danger btn-circle btn-sm" aria-label="{% translate 'Anular' %}"><i class="fas fa-ban"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Tabla -->
+  {% translate "Tabla de ejemplo" as table_title %}
+  {% include "includes/datatable.html" with table_id="demo-table" title=table_title columns=table_columns rows=table_rows %}
+
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

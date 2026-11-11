@@ -9,6 +9,7 @@ en Docker y en CI llegan por el entorno del proceso.
 from pathlib import Path
 
 import environ
+from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -30,6 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.forms",
     # Apps del proyecto
     "apps.core",
 ]
@@ -56,10 +58,18 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "apps.core.context_processors.branding",
             ],
         },
     },
 ]
+
+# Formularios: `{{ form }}` usa las plantillas de templates/forms/ con las clases
+# de Bootstrap 4 (SPEC 02, paso 8).
+FORM_RENDERER = "apps.core.forms.BootstrapFormRenderer"
+
+# Mensajes: el nivel `error` usa la clase de alerta `alert-danger` de Bootstrap.
+MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 WSGI_APPLICATION = "config.wsgi.application"
 
@@ -111,3 +121,6 @@ USE_TZ = True
 # Archivos estáticos
 
 STATIC_URL = "static/"
+
+# Recursos de SB Admin 2 copiados de references/ y los estilos y scripts propios.
+STATICFILES_DIRS = [BASE_DIR / "static"]

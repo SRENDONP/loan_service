@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Inicio" %}{% endblock %}
+
+{% block page_heading %}
+  <h1 class="h3 mb-4 text-gray-800">{% translate "Inicio" %}</h1>
+{% endblock %}
+
+{% block content %}
+  <p>{% blocktranslate %}Te damos la bienvenida a {{ business_name }}. Usa el menú lateral para ir a cada módulo.{% endblocktranslate %}</p>
+{% endblock %}
