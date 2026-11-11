@@ -61,3 +61,22 @@ def test_prod_fails_without_required_variable(fresh_prod_import, monkeypatch, mi
 
     with pytest.raises(ImproperlyConfigured, match=missing):
         fresh_prod_import()
+
+
+def test_audit_trusted_proxies_defaults_to_zero(fresh_prod_import, monkeypatch):
+    monkeypatch.delenv("AUDIT_TRUSTED_PROXIES", raising=False)
+
+    assert fresh_prod_import().AUDIT_TRUSTED_PROXIES == 0
+
+
+def test_audit_trusted_proxies_is_read_from_env(fresh_prod_import, monkeypatch):
+    monkeypatch.setenv("AUDIT_TRUSTED_PROXIES", "1")
+
+    assert fresh_prod_import().AUDIT_TRUSTED_PROXIES == 1
+
+
+def test_negative_audit_trusted_proxies_fails(fresh_prod_import, monkeypatch):
+    monkeypatch.setenv("AUDIT_TRUSTED_PROXIES", "-1")
+
+    with pytest.raises(ImproperlyConfigured, match="AUDIT_TRUSTED_PROXIES"):
+        fresh_prod_import()

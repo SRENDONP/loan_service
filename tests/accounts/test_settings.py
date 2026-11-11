@@ -36,10 +36,15 @@ def test_session_expires_at_browser_close_and_lasts_twelve_hours():
 def test_login_required_middleware_follows_authentication():
     middleware = settings.MIDDLEWARE
     auth = middleware.index("django.contrib.auth.middleware.AuthenticationMiddleware")
-
-    assert (
-        middleware[auth + 1] == "django.contrib.auth.middleware.LoginRequiredMiddleware"
+    login_required = middleware.index(
+        "django.contrib.auth.middleware.LoginRequiredMiddleware"
     )
+
+    # Entre los dos solo va el contexto de auditoría (SPEC 05, §3.4), que no
+    # responde por sí mismo.
+    assert middleware[auth + 1 : login_required] == [
+        "apps.auditoria.middleware.AuditContextMiddleware"
+    ]
 
 
 def test_argon2_is_the_first_password_hasher():

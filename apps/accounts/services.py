@@ -34,6 +34,8 @@ from apps.accounts.policy import (
     get_password_min_length,
 )
 from apps.accounts.roles import Role, get_role
+from apps.auditoria.actions import AuditAction
+from apps.auditoria.services import diff, record, snapshot
 
 
 def find_user_by_identifier(identifier: str) -> User | None:
@@ -72,6 +74,14 @@ def authenticate_with_lockout(
     now = now or timezone.now()
     user = find_user_by_identifier(identifier)
     if user is not None and is_locked(user, now):
+        # Durante el bloqueo no se llama a authenticate(), así que Django no
+        # emite user_login_failed: el intento se audita aquí (SPEC 05, §3.7).
+        record(
+            AuditAction.LOGIN_BLOCKED,
+            target=user,
+            identifier=identifier,
+            extra={"locked_until": user.locked_until},
+        )
         return None
 
     authenticated = authenticate(
@@ -101,10 +111,19 @@ def register_failed_attempt(user: User, now: datetime | None = None) -> None:
         if is_locked(locked, now):
             return
         locked.failed_login_attempts += 1
-        if locked.failed_login_attempts >= get_max_failed_attempts():
+        attempts = locked.failed_login_attempts
+        locks_now = attempts >= get_max_failed_attempts()
+        if locks_now:
             locked.locked_until = now + get_lockout_duration()
             locked.failed_login_attempts = 0
         locked.save(update_fields=["failed_login_attempts", "locked_until"])
+        if locks_now:
+            # El registro va en la misma transacción que el bloqueo (SPEC 05).
+            record(
+                AuditAction.ACCOUNT_LOCKED,
+                target=locked,
+                extra={"locked_until": locked.locked_until, "attempts": attempts},
+            )
 
     user.failed_login_attempts = locked.failed_login_attempts
     user.locked_until = locked.locked_until
@@ -138,6 +157,30 @@ PROFILE_FIELDS = (
     "document_number",
 )
 """Datos del usuario que se pueden editar. `username` solo se fija al crear."""
+
+AUDITED_USER_FIELDS = (
+    *PROFILE_FIELDS,
+    "is_active",
+    "must_change_password",
+    "failed_login_attempts",
+    "locked_until",
+    "password",
+)
+"""
+Campos del usuario que audita la gestión (SPEC 05, §3.7), además de `role`.
+
+`password` queda oculto en el registro. `last_login` no se audita: el ingreso
+tiene su propio registro.
+"""
+
+
+def user_audit_snapshot(
+    user: User, fields: tuple[str, ...] = AUDITED_USER_FIELDS
+) -> dict[str, Any]:
+    """Los campos auditables del usuario y su rol, para comparar con `diff`."""
+    role = get_role(user)
+    return {**snapshot(user, fields), "role": role.value if role else None}
+
 
 TEMPORARY_PASSWORD_LENGTH = 12
 # Letras y dígitos sin los que se confunden al dictarlos o leerlos.
@@ -196,6 +239,13 @@ def create_user(
     with transaction.atomic():
         user.save()
         _set_role(user, role)
+        # Al crear, `antes` es null. La contraseña temporal no aparece.
+        record(
+            AuditAction.USER_CREATED,
+            actor=actor,
+            target=user,
+            changes=diff({}, user_audit_snapshot(user, PROFILE_FIELDS)),
+        )
     return user, password
 
 
@@ -214,6 +264,7 @@ def update_user(
     current_role = get_role(user)
     if role != current_role:
         _ensure_not_self(actor, user, _("No puedes cambiar tu propio rol."))
+    before = user_audit_snapshot(user)
     _apply_profile(user, data)
     user.full_clean()
     with transaction.atomic():
@@ -222,6 +273,10 @@ def update_user(
         user.save()
         if role != current_role:
             _set_role(user, role)
+        changes = diff(before, user_audit_snapshot(user))
+        # Una edición sin cambios reales no deja registro.
+        if changes:
+            record(AuditAction.USER_UPDATED, actor=actor, target=user, changes=changes)
     return user
 
 
@@ -252,6 +307,7 @@ def deactivate_user(actor: User, user: User, *, reason: str) -> None:
         )
     with transaction.atomic():
         _ensure_another_administrator_remains(user)
+        before = user_audit_snapshot(user)
         user.is_active = False
         user.deactivated_at = timezone.now()
         user.deactivated_by = actor
@@ -264,7 +320,14 @@ def deactivate_user(actor: User, user: User, *, reason: str) -> None:
                 "deactivation_reason",
             ]
         )
-        _delete_sessions(user)
+        sessions_closed = _delete_sessions(user)
+        record(
+            AuditAction.USER_DEACTIVATED,
+            actor=actor,
+            target=user,
+            changes=diff(before, user_audit_snapshot(user)),
+            extra={"reason": reason, "sessions_closed": sessions_closed},
+        )
 
 
 def reactivate_user(actor: User, user: User) -> None:
@@ -279,6 +342,7 @@ def reactivate_user(actor: User, user: User) -> None:
     _ensure_not_self(actor, user, _("No puedes reactivar tu propia cuenta."))
     if user.is_active:
         raise UserRuleError(_("El usuario ya está activo."), code="already_active")
+    before = user_audit_snapshot(user)
     user.is_active = True
     user.deactivated_at = None
     user.deactivated_by = None
@@ -294,6 +358,12 @@ def reactivate_user(actor: User, user: User) -> None:
                 "must_change_password",
             ]
         )
+        record(
+            AuditAction.USER_REACTIVATED,
+            actor=actor,
+            target=user,
+            changes=diff(before, user_audit_snapshot(user)),
+        )
 
 
 def unlock_user(actor: User, user: User) -> None:
@@ -302,8 +372,15 @@ def unlock_user(actor: User, user: User) -> None:
     _ensure_not_superuser(user)
     _ensure_not_self(actor, user, _("No puedes desbloquear tu propia cuenta."))
     _ensure_active(user)
+    before = user_audit_snapshot(user)
     with transaction.atomic():
         clear_failed_attempts(user)
+        record(
+            AuditAction.USER_UNLOCKED,
+            actor=actor,
+            target=user,
+            changes=diff(before, user_audit_snapshot(user)),
+        )
 
 
 def reset_user_password(actor: User, user: User) -> str:
@@ -321,6 +398,7 @@ def reset_user_password(actor: User, user: User) -> str:
         _("Para cambiar tu propia contraseña usa la opción Cambiar contraseña."),
     )
     _ensure_active(user)
+    before = user_audit_snapshot(user)
     password = generate_temporary_password()
     user.set_password(password)
     user.must_change_password = True
@@ -335,7 +413,15 @@ def reset_user_password(actor: User, user: User) -> str:
                 "locked_until",
             ]
         )
-        _delete_sessions(user)
+        sessions_closed = _delete_sessions(user)
+        # `password` queda oculto: ni el hash ni la temporal llegan al registro.
+        record(
+            AuditAction.USER_PASSWORD_RESET,
+            actor=actor,
+            target=user,
+            changes=diff(before, user_audit_snapshot(user)),
+            extra={"sessions_closed": sessions_closed},
+        )
     return password
 
 
@@ -346,7 +432,14 @@ def logout_user_sessions(actor: User, user: User) -> int:
     _ensure_not_self(actor, user, _("No puedes cerrar tus propias sesiones aquí."))
     _ensure_active(user)
     with transaction.atomic():
-        return _delete_sessions(user)
+        count = _delete_sessions(user)
+        record(
+            AuditAction.USER_SESSIONS_CLOSED,
+            actor=actor,
+            target=user,
+            extra={"count": count},
+        )
+    return count
 
 
 def _delete_sessions(user: User) -> int:

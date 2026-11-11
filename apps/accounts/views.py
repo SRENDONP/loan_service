@@ -6,6 +6,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
 from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import transaction
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -22,6 +23,7 @@ from django.views.generic import DetailView, FormView, TemplateView, View
 from apps.accounts.forms import (
     LoginForm,
     PasswordChangeForm,
+    PasswordResetForm,
     SetPasswordForm,
     UserCreateForm,
     UserDeactivateForm,
@@ -33,6 +35,7 @@ from apps.accounts.roles import Role, get_role
 from apps.accounts.services import (
     create_user,
     deactivate_user,
+    find_user_by_identifier,
     logout_user_sessions,
     reactivate_user,
     reset_user_password,
@@ -40,6 +43,8 @@ from apps.accounts.services import (
     update_user,
 )
 from apps.accounts.tokens import password_reset_token_generator
+from apps.auditoria.actions import AuditAction
+from apps.auditoria.services import diff, record, snapshot
 
 
 @method_decorator(login_not_required, name="dispatch")
@@ -78,9 +83,48 @@ class PasswordChangeView(auth_views.PasswordChangeView):
     success_url = reverse_lazy("core:home")
 
     def form_valid(self, form: PasswordChangeForm) -> HttpResponse:
-        response = super().form_valid(form)
+        user = form.user
+        forced = user.must_change_password
+        before = snapshot(user, ["password"])
+        # El cambio y su registro de auditoría van juntos (SPEC 05, §3.7).
+        with transaction.atomic():
+            response = super().form_valid(form)
+            record(
+                AuditAction.PASSWORD_CHANGED,
+                actor=user,
+                target=user,
+                changes=diff(before, snapshot(user, ["password"])),
+                extra={"forced": forced},
+            )
         messages.success(self.request, _("Cambiaste tu contraseña."))
         return response
+
+
+@method_decorator(login_not_required, name="dispatch")
+class PasswordResetView(auth_views.PasswordResetView):
+    """
+    Pide el enlace de recuperación con el correo.
+
+    Registra la solicitud exista o no el correo (SPEC 05, §3.7). La respuesta
+    es la misma en los dos casos, para no revelar qué correos existen.
+    """
+
+    form_class = PasswordResetForm
+    template_name = "accounts/password_reset.html"
+    email_template_name = "accounts/email/password_reset_email.txt"
+    subject_template_name = "accounts/email/password_reset_subject.txt"
+    token_generator = password_reset_token_generator
+    success_url = reverse_lazy("accounts:password_reset_done")
+
+    def form_valid(self, form: PasswordResetForm) -> HttpResponse:
+        email = form.cleaned_data["email"]
+        # Se registra antes de enviar: si la auditoría falla, no sale el correo.
+        record(
+            AuditAction.PASSWORD_RESET_REQUESTED,
+            target=find_user_by_identifier(email),
+            identifier=email,
+        )
+        return super().form_valid(form)
 
 
 class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
@@ -95,6 +139,19 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
     template_name = "accounts/password_reset_confirm.html"
     token_generator = password_reset_token_generator
     success_url = reverse_lazy("accounts:password_reset_complete")
+
+    def form_valid(self, form: SetPasswordForm) -> HttpResponse:
+        user = form.user
+        before = snapshot(user, ["password"])
+        with transaction.atomic():
+            response = super().form_valid(form)
+            record(
+                AuditAction.PASSWORD_RESET_COMPLETED,
+                actor=user,
+                target=user,
+                changes=diff(before, snapshot(user, ["password"])),
+            )
+        return response
 
 
 @login_not_required
