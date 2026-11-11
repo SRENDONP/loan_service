@@ -1,0 +1,80 @@
+- generic [active] [ref=f13e1]:
+  - generic [ref=f13e2]:
+    - list [ref=f13e3]:
+      - link "" [ref=f13e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f13e7]
+      - listitem [ref=f13e8]:
+        - link " Inicio" [ref=f13e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f13e10]: 
+          - generic [ref=f13e11]: Inicio
+      - separator [ref=f13e12]
+      - generic [ref=f13e13]: Administración
+      - listitem [ref=f13e14]:
+        - link " Usuarios" [ref=f13e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f13e16]: 
+          - generic [ref=f13e17]: Usuarios
+      - separator [ref=f13e18]
+      - generic [ref=f13e19]: Desarrollo
+      - listitem [ref=f13e20]:
+        - link " Componentes" [ref=f13e21] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f13e22]: 
+          - generic [ref=f13e23]: Componentes
+      - text: 
+    - generic [ref=f13e24]:
+      - generic [ref=f13e25]:
+        - navigation [ref=f13e26]:
+          - button "Mostrar u ocultar el menú" [ref=f13e27] [cursor=pointer]:
+            - generic [ref=f13e28]: 
+          - list [ref=f13e29]:
+            - listitem [ref=f13e30]:
+              - button [ref=f13e31] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f13e32]: 
+              - text:  
+        - generic [ref=f13e33]:
+          - heading "Editar a demo_nuevo" [level=1] [ref=f13e34]
+          - generic [ref=f13e37]:
+            - heading "Datos del usuario" [level=2] [ref=f13e39]
+            - generic [ref=f13e41]:
+              - generic [ref=f13e42]:
+                - generic [ref=f13e43]: "Nombres:"
+                - textbox "Nombres:" [ref=f13e44]: Nora
+              - generic [ref=f13e45]:
+                - generic [ref=f13e46]: "Apellidos:"
+                - textbox "Apellidos:" [ref=f13e47]: Velásquez
+              - generic [ref=f13e48]:
+                - generic [ref=f13e49]: "Rol:"
+                - combobox "Rol:" [ref=f13e50]:
+                  - option "Administrador"
+                  - option "Supervisor" [selected]
+                  - option "Cajero/Cobrador"
+                  - option "Consulta"
+              - generic [ref=f13e51]:
+                - generic [ref=f13e52]: "Correo electrónico:"
+                - textbox "Correo electrónico:" [ref=f13e53]
+              - generic [ref=f13e54]:
+                - generic [ref=f13e55]: "Teléfono celular:"
+                - textbox "Teléfono celular:" [ref=f13e56]: "3105556677"
+                - generic [ref=f13e57]: Opcional. Celular de 10 dígitos que empieza por 3.
+              - generic [ref=f13e58]:
+                - generic [ref=f13e59]: "Tipo de documento:"
+                - combobox "Tipo de documento:" [ref=f13e60]:
+                  - option "Sin documento" [selected]
+                  - option "Cédula de ciudadanía"
+                  - option "Cédula de extranjería"
+                  - option "Permiso por protección temporal"
+                  - option "Pasaporte"
+                  - option "Tarjeta de identidad"
+              - generic [ref=f13e61]:
+                - generic [ref=f13e62]: "Número de documento:"
+                - textbox "Número de documento:" [ref=f13e63]
+                - generic [ref=f13e64]: Opcional. Sin puntos ni espacios. Si lo escribes, elige también el tipo.
+              - button "Guardar cambios" [ref=f13e65] [cursor=pointer]
+              - link "Cancelar" [ref=f13e66] [cursor=pointer]:
+                - /url: /usuarios/8/
+      - contentinfo [ref=f13e67]:
+        - generic [ref=f13e68]: Copyright © Gestión de préstamos 2026
+  - text: 

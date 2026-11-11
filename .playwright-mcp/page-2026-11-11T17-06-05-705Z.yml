@@ -1,0 +1,158 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - list [ref=f1e3]:
+      - link " Gestión de préstamos" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f1e5]: 
+        - generic [ref=f1e7]: Gestión de préstamos
+      - separator [ref=f1e8]
+      - listitem [ref=f1e9]:
+        - link " Inicio" [ref=f1e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e11]: 
+          - text: Inicio
+      - separator [ref=f1e12]
+      - generic [ref=f1e13]: Administración
+      - listitem [ref=f1e14]:
+        - link " Usuarios" [ref=f1e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f1e16]: 
+          - text: Usuarios
+      - separator [ref=f1e17]
+      - generic [ref=f1e18]: Desarrollo
+      - listitem [ref=f1e19]:
+        - link " Componentes" [ref=f1e20] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f1e21]: 
+          - text: Componentes
+      - separator [ref=f1e22]
+      - button "Contraer o expandir el menú" [ref=f1e24] [cursor=pointer]: 
+    - generic [ref=f1e25]:
+      - generic [ref=f1e26]:
+        - navigation [ref=f1e27]:
+          - text: 
+          - list [ref=f1e28]:
+            - listitem [ref=f1e29]:
+              - button "Ada Restrepo" [ref=f1e30] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f1e32]: 
+              - text:  
+        - generic [ref=f1e33]:
+          - generic [ref=f1e34]:
+            - heading "Usuarios" [level=1] [ref=f1e35]
+            - link " Nuevo usuario" [ref=f1e36] [cursor=pointer]:
+              - /url: /usuarios/nuevo/
+              - generic [ref=f1e37]: 
+              - text: Nuevo usuario
+          - paragraph [ref=f1e38]: "Las personas que pueden entrar al sistema, con su rol y su estado. Los usuarios no se borran: se desactivan."
+          - generic [ref=f1e39]:
+            - heading "Usuarios del sistema" [level=6] [ref=f1e41]
+            - generic [ref=f1e44]:
+              - generic [ref=f1e45]:
+                - generic [ref=f1e48]:
+                  - text: Mostrar
+                  - combobox "Mostrar registros" [ref=f1e49]:
+                    - option "10" [selected]
+                    - option "25"
+                    - option "50"
+                    - option "100"
+                  - text: registros
+                - generic [ref=f1e52]:
+                  - text: "Buscar:"
+                  - searchbox "Buscar:" [ref=f1e53]
+              - grid "Usuarios del sistema" [ref=f1e56]:
+                - rowgroup [ref=f1e57]:
+                  - row [ref=f1e58]:
+                    - 'columnheader "Usuario: activar para ordenar de forma descendente" [ref=f1e59] [cursor=pointer]': ↑ Usuario ↓
+                    - 'columnheader "Nombre: activar para ordenar de forma ascendente" [ref=f1e60] [cursor=pointer]': ↑ Nombre ↓
+                    - 'columnheader "Rol: activar para ordenar de forma ascendente" [ref=f1e61] [cursor=pointer]': ↑ Rol ↓
+                    - 'columnheader "Estado: activar para ordenar de forma ascendente" [ref=f1e62] [cursor=pointer]': ↑ Estado ↓
+                    - 'columnheader "Último ingreso: activar para ordenar de forma ascendente" [ref=f1e63] [cursor=pointer]': ↑ Último ingreso ↓
+                    - 'columnheader "Acciones: activar para ordenar de forma ascendente" [ref=f1e64] [cursor=pointer]': ↑ Acciones ↓
+                - rowgroup [ref=f1e65]:
+                  - row [ref=f1e66]:
+                    - columnheader "Usuario" [ref=f1e67]
+                    - columnheader "Nombre" [ref=f1e68]
+                    - columnheader "Rol" [ref=f1e69]
+                    - columnheader "Estado" [ref=f1e70]
+                    - columnheader "Último ingreso" [ref=f1e71]
+                    - columnheader "Acciones" [ref=f1e72]
+                - rowgroup [ref=f1e73]:
+                  - row [ref=f1e74]:
+                    - gridcell [ref=f1e75]:
+                      - link "admin" [ref=f1e76] [cursor=pointer]:
+                        - /url: /usuarios/1/
+                    - gridcell "—" [ref=f1e77]
+                    - gridcell "Superusuario" [ref=f1e78]
+                    - gridcell "Activo" [ref=f1e80]
+                    - gridcell "11/11/2026 11:00" [ref=f1e82]
+                    - gridcell [ref=f1e83]
+                  - row [ref=f1e84]:
+                    - gridcell [ref=f1e85]:
+                      - link "bloqueo" [ref=f1e86] [cursor=pointer]:
+                        - /url: /usuarios/3/
+                    - gridcell "—" [ref=f1e87]
+                    - gridcell "Sin rol" [ref=f1e88]
+                    - gridcell "Activo" [ref=f1e90]
+                    - gridcell "11/11/2026 11:00" [ref=f1e92]
+                    - gridcell [ref=f1e93]:
+                      - link "Ver ficha" [ref=f1e94] [cursor=pointer]:
+                        - /url: /usuarios/3/
+                  - row [ref=f1e95]:
+                    - gridcell [ref=f1e96]:
+                      - link "cobrador" [ref=f1e97] [cursor=pointer]:
+                        - /url: /usuarios/2/
+                    - gridcell "—" [ref=f1e98]
+                    - gridcell "Sin rol" [ref=f1e99]
+                    - gridcell "Activo" [ref=f1e101]
+                    - gridcell "11/11/2026 10:58" [ref=f1e103]
+                    - gridcell [ref=f1e104]:
+                      - link "Ver ficha" [ref=f1e105] [cursor=pointer]:
+                        - /url: /usuarios/2/
+                  - row [ref=f1e106]:
+                    - gridcell [ref=f1e107]:
+                      - link "demo_admin" [ref=f1e108] [cursor=pointer]:
+                        - /url: /usuarios/5/
+                    - gridcell "Ada Restrepo" [ref=f1e109]
+                    - gridcell "Administrador" [ref=f1e110]
+                    - gridcell "Activo" [ref=f1e112]
+                    - gridcell "11/11/2026 12:06" [ref=f1e114]
+                    - gridcell [ref=f1e115]:
+                      - link "Ver ficha" [ref=f1e116] [cursor=pointer]:
+                        - /url: /usuarios/5/
+                  - row [ref=f1e117]:
+                    - gridcell [ref=f1e118]:
+                      - link "demo_cobrador" [ref=f1e119] [cursor=pointer]:
+                        - /url: /usuarios/6/
+                    - gridcell "Carlos Ruiz" [ref=f1e120]
+                    - gridcell "Cajero/Cobrador" [ref=f1e121]
+                    - gridcell "Bloqueado" [ref=f1e123]
+                    - gridcell "Nunca" [ref=f1e125]
+                    - gridcell [ref=f1e126]:
+                      - link "Ver ficha" [ref=f1e127] [cursor=pointer]:
+                        - /url: /usuarios/6/
+                  - row [ref=f1e128]:
+                    - gridcell [ref=f1e129]:
+                      - link "demo_consulta" [ref=f1e130] [cursor=pointer]:
+                        - /url: /usuarios/7/
+                    - gridcell "Lucía Gómez" [ref=f1e131]
+                    - gridcell "Consulta" [ref=f1e132]
+                    - gridcell "Activo" [ref=f1e134]
+                    - gridcell "Nunca" [ref=f1e136]
+                    - gridcell [ref=f1e137]:
+                      - link "Ver ficha" [ref=f1e138] [cursor=pointer]:
+                        - /url: /usuarios/7/
+              - generic [ref=f1e139]:
+                - status [ref=f1e141]: Mostrando 1 a 6 de 6 registros
+                - list [ref=f1e144]:
+                  - listitem [ref=f1e145]:
+                    - link "Anterior":
+                      - /url: "#"
+                  - listitem [ref=f1e146]:
+                    - link "1" [ref=f1e147] [cursor=pointer]:
+                      - /url: "#"
+                  - listitem [ref=f1e148]:
+                    - link "Siguiente":
+                      - /url: "#"
+      - contentinfo [ref=f1e149]:
+        - generic [ref=f1e150]: Copyright © Gestión de préstamos 2026
+  - text: 

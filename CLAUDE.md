@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. La **SPEC 03 (autenticación)** dejó la app `apps/accounts`: el modelo de usuario propio (`AUTH_USER_MODEL = "accounts.User"`), el inicio de sesión con usuario o correo, el bloqueo temporal tras intentos fallidos, el cambio obligatorio de contraseña en el primer ingreso, la recuperación por correo simulado, Argon2 y la sesión obligatoria en todo el sistema (`LoginRequiredMiddleware`). Todavía no hay modelos de negocio.
+Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. La **SPEC 03 (autenticación)** dejó la app `apps/accounts`: el modelo de usuario propio (`AUTH_USER_MODEL = "accounts.User"`), el inicio de sesión con usuario o correo, el bloqueo temporal tras intentos fallidos, el cambio obligatorio de contraseña en el primer ingreso, la recuperación por correo simulado, Argon2 y la sesión obligatoria en todo el sistema (`LoginRequiredMiddleware`). La **SPEC 04 (usuarios, roles y permisos)** dejó los cuatro roles como grupos de Django, sincronizados desde el código (`apps/accounts/roles.py`, ADR-002), las utilidades de permisos, los servicios de gestión de usuarios y el módulo `/usuarios/` para el Administrador. Todavía no hay modelos de negocio.
 
 La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1 a D16), está en `docs/specs-tentativas.md`. Léela antes de escribir una spec.
 
@@ -28,6 +28,7 @@ uv run python manage.py runserver        # usa config.settings.dev
 uv run python manage.py makemigrations
 uv run python manage.py migrate
 uv run python manage.py check
+uv run python manage.py sync_roles       # grupos = ROLE_PERMISSIONS (también corre con migrate)
 
 # Pruebas y calidad (los mismos pasos que el CI)
 uv run pytest                            # requiere el PostgreSQL de compose
@@ -185,8 +186,20 @@ register(
 - **Políticas:** los intentos antes del bloqueo, la duración del bloqueo, la longitud mínima de la contraseña y la vigencia del enlace de recuperación solo se leen con `apps/accounts/policy.py`. La SPEC 06 cambia ese módulo para leerlos de `parametros`.
 - **Servicios:** el bloqueo y el desbloqueo están en `apps/accounts/services.py` (`authenticate_with_lockout`, `clear_failed_attempts`, `mark_password_changed`). La SPEC 04 los reutiliza para desbloquear, y la SPEC 05 para auditar los ingresos.
 - **Cambio obligatorio:** mientras `must_change_password` sea verdadero, `ForcePasswordChangeMiddleware` lleva al usuario a `/contrasena/cambiar/` desde cualquier ruta.
-- **Admin de Django:** solo para superusuarios y con el login propio. Sirve para crear usuarios hasta la SPEC 04.
+- **Admin de Django:** solo para superusuarios y con el login propio. Es una herramienta técnica: los usuarios se gestionan en `/usuarios/` (SPEC 04), y el admin no permite borrarlos.
 - **Pruebas:** usan el hasher MD5 (fixture `autouse` en `tests/conftest.py`). Para pedir páginas usa los fixtures `auth_client`, `user` y `make_user`; `make_user` crea el usuario con `must_change_password=False` salvo que se indique otra cosa.
+
+## Usuarios, roles y permisos (SPEC 04)
+
+- **Roles:** `Role` en `apps/accounts/roles.py` (`ADMINISTRATOR`, `SUPERVISOR`, `COLLECTOR`, `VIEWER`). El valor es el nombre exacto del grupo de Django. Cada usuario que no es superusuario tiene **exactamente un** rol; se asigna solo con los servicios. Usa `get_role(user)` y `has_role(user, role)`. Los superusuarios son cuentas técnicas sin rol y no se gestionan desde la aplicación.
+- **Permisos de cada rol:** solo en `ROLE_PERMISSIONS` de `roles.py`. `sync_roles` deja los cuatro grupos exactamente iguales al mapa: agrega lo que falta y **quita lo que sobra**. Corre sola después de cada `migrate` (receptor de `post_migrate`, ADR-002) y a mano con `uv run python manage.py sync_roles`. Nunca cambies los permisos de esos grupos a mano ni con una migración de datos.
+- **Cuando una spec cree un módulo:** agrega los permisos de sus modelos a `ROLE_PERMISSIONS` en la misma rama, con una prueba de la matriz. Un permiso que no existe hace fallar `migrate` con `ImproperlyConfigured`.
+- **Quién es cobrador:** `User.objects.collectors()`: activo, no superusuario y con el rol `Cajero/Cobrador`. No hay relación entre supervisor y cobradores: todo supervisor ve a todos. También existen `User.objects.with_role(role)` y `User.objects.active_administrators()`.
+- **Verificar permisos** (`apps/accounts/permissions.py`): en servicios, `require_perms(user, *perms)`; en vistas de clase, `PermissionRequiredMixin` (pon `permission_required`); en vistas de función, `permission_required(*perms)`. Las tres responden 403, nunca redirigen al login.
+- **Servicios de gestión** (`apps/accounts/services.py`): `create_user`, `update_user`, `deactivate_user`, `reactivate_user`, `unlock_user`, `reset_user_password` y `logout_user_sessions`. Reciben siempre al `actor` primero, verifican su permiso y lanzan `UserRuleError` (subclase de `ValidationError`) cuando una regla lo impide: nada sobre uno mismo ni sobre un superusuario, siempre queda un Administrador activo que no es superusuario y sobre un inactivo solo se edita o se reactiva. La SPEC 05 los audita desde ahí.
+- **Contraseñas temporales:** las genera `generate_temporary_password()` y se muestran una sola vez con `temporary_password_response` (renderizada desde el POST, con `no-store`). Nunca las pongas en `messages`, en la sesión ni en logs.
+- **Usuarios nunca se borran:** el modelo no tiene permiso `delete_user` y el admin no ofrece el borrado. Se desactivan con motivo (`deactivated_at`, `deactivated_by`, `deactivation_reason`).
+- **Pruebas:** `make_user(role=Role.X)` crea el usuario con ese rol. Los grupos ya existen en la base de pruebas porque `migrate` corre `sync_roles`.
 
 ## Convenciones de código
 

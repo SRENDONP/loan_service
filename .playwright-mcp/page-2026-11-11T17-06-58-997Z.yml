@@ -1,0 +1,105 @@
+- generic [ref=f5e1]:
+  - generic [ref=f5e2]:
+    - list [ref=f5e3]:
+      - link " Gestión de préstamos" [ref=f5e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f5e5]: 
+        - generic [ref=f5e7]: Gestión de préstamos
+      - separator [ref=f5e8]
+      - listitem [ref=f5e9]:
+        - link " Inicio" [ref=f5e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f5e11]: 
+          - text: Inicio
+      - separator [ref=f5e12]
+      - generic [ref=f5e13]: Administración
+      - listitem [ref=f5e14]:
+        - link " Usuarios" [ref=f5e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f5e16]: 
+          - text: Usuarios
+      - separator [ref=f5e17]
+      - generic [ref=f5e18]: Desarrollo
+      - listitem [ref=f5e19]:
+        - link " Componentes" [ref=f5e20] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f5e21]: 
+          - text: Componentes
+      - separator [ref=f5e22]
+      - button "Contraer o expandir el menú" [ref=f5e24] [cursor=pointer]: 
+    - generic [ref=f5e25]:
+      - generic [ref=f5e26]:
+        - navigation [ref=f5e27]:
+          - text: 
+          - list [ref=f5e28]:
+            - listitem [ref=f5e29]:
+              - button "Ada Restrepo" [ref=f5e30] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f5e32]: 
+              - text:  
+        - generic [ref=f5e33]:
+          - generic [ref=f5e34]:
+            - heading "Nora Velásquez" [level=1] [ref=f5e35]
+            - generic [ref=f5e36]:
+              - link " Volver a usuarios" [ref=f5e37] [cursor=pointer]:
+                - /url: /usuarios/
+                - generic [ref=f5e38]: 
+                - text: Volver a usuarios
+              - link " Editar" [ref=f5e39] [cursor=pointer]:
+                - /url: /usuarios/8/editar/
+                - generic [ref=f5e40]: 
+                - text: Editar
+          - generic [ref=f5e41]:
+            - generic [ref=f5e43]:
+              - heading "Datos del usuario" [level=2] [ref=f5e45]
+              - generic [ref=f5e47]:
+                - term [ref=f5e48]: Nombre de usuario
+                - definition [ref=f5e49]: demo_nuevo
+                - term [ref=f5e50]: Nombres
+                - definition [ref=f5e51]: Nora
+                - term [ref=f5e52]: Apellidos
+                - definition [ref=f5e53]: Velásquez
+                - term [ref=f5e54]: Correo electrónico
+                - definition [ref=f5e55]: —
+                - term [ref=f5e56]: Teléfono celular
+                - definition [ref=f5e57]: "3105556677"
+                - term [ref=f5e58]: Documento
+                - definition [ref=f5e59]: —
+            - generic [ref=f5e61]:
+              - heading "Acceso" [level=2] [ref=f5e63]
+              - generic [ref=f5e65]:
+                - term [ref=f5e66]: Rol
+                - definition [ref=f5e67]:
+                  - generic [ref=f5e68]: Supervisor
+                - term [ref=f5e69]: Estado
+                - definition [ref=f5e70]:
+                  - generic [ref=f5e71]: Activo
+                - term [ref=f5e72]: Último ingreso
+                - definition [ref=f5e73]: Nunca
+                - term [ref=f5e74]: Cambio de contraseña
+                - definition [ref=f5e75]: Pendiente en su próximo ingreso
+          - generic [ref=f5e76]:
+            - heading "Acciones" [level=2] [ref=f5e78]
+            - generic [ref=f5e79]:
+              - button " Restablecer contraseña" [ref=f5e81] [cursor=pointer]:
+                - generic [ref=f5e82]: 
+                - generic [ref=f5e84]: Restablecer contraseña
+              - button " Cerrar sesiones" [ref=f5e86] [cursor=pointer]:
+                - generic [ref=f5e87]: 
+                - generic [ref=f5e89]: Cerrar sesiones
+              - link " Desactivar" [ref=f5e90] [cursor=pointer]:
+                - /url: /usuarios/8/desactivar/
+                - generic [ref=f5e91]: 
+                - generic [ref=f5e93]: Desactivar
+      - contentinfo [ref=f5e94]:
+        - generic [ref=f5e95]: Copyright © Gestión de préstamos 2026
+  - text: 
+  - dialog "Confirma la acción" [active] [ref=f5e97]:
+    - document:
+      - generic [ref=f5e98]:
+        - generic [ref=f5e99]:
+          - heading "Confirma la acción" [level=5] [ref=f5e100]
+          - button "Cerrar" [ref=f5e101] [cursor=pointer]: ×
+        - generic [ref=f5e102]: Se cerrarán todas las sesiones abiertas de demo_nuevo. Podrá volver a entrar con su contraseña. ¿Continuar?
+        - generic [ref=f5e103]:
+          - button "Cancelar" [ref=f5e104] [cursor=pointer]
+          - button "Cerrar sesiones" [ref=f5e105] [cursor=pointer]

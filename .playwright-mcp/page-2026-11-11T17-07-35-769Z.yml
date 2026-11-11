@@ -1,0 +1,167 @@
+- generic [active] [ref=f11e1]:
+  - generic [ref=f11e2]:
+    - list [ref=f11e3]:
+      - link "" [ref=f11e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f11e7]
+      - listitem [ref=f11e8]:
+        - link " Inicio" [ref=f11e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f11e10]: 
+          - generic [ref=f11e11]: Inicio
+      - separator [ref=f11e12]
+      - generic [ref=f11e13]: Administración
+      - listitem [ref=f11e14]:
+        - link " Usuarios" [ref=f11e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f11e16]: 
+          - generic [ref=f11e17]: Usuarios
+      - separator [ref=f11e18]
+      - generic [ref=f11e19]: Desarrollo
+      - listitem [ref=f11e20]:
+        - link " Componentes" [ref=f11e21] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f11e22]: 
+          - generic [ref=f11e23]: Componentes
+      - text: 
+    - generic [ref=f11e24]:
+      - generic [ref=f11e25]:
+        - navigation [ref=f11e26]:
+          - button "Mostrar u ocultar el menú" [ref=f11e27] [cursor=pointer]:
+            - generic [ref=f11e28]: 
+          - list [ref=f11e29]:
+            - listitem [ref=f11e30]:
+              - button [ref=f11e31] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f11e32]: 
+              - text:  
+        - generic [ref=f11e33]:
+          - generic [ref=f11e34]:
+            - heading "Usuarios" [level=1] [ref=f11e35]
+            - link " Nuevo usuario" [ref=f11e36] [cursor=pointer]:
+              - /url: /usuarios/nuevo/
+              - generic [ref=f11e37]: 
+              - text: Nuevo usuario
+          - paragraph [ref=f11e38]: "Las personas que pueden entrar al sistema, con su rol y su estado. Los usuarios no se borran: se desactivan."
+          - generic [ref=f11e39]:
+            - heading "Usuarios del sistema" [level=6] [ref=f11e41]
+            - generic [ref=f11e44]:
+              - generic [ref=f11e45]:
+                - generic [ref=f11e48]:
+                  - text: Mostrar
+                  - combobox "Mostrar registros" [ref=f11e49]:
+                    - option "10" [selected]
+                    - option "25"
+                    - option "50"
+                    - option "100"
+                  - text: registros
+                - generic [ref=f11e52]:
+                  - text: "Buscar:"
+                  - searchbox "Buscar:" [ref=f11e53]
+              - grid "Usuarios del sistema" [ref=f11e56]:
+                - rowgroup [ref=f11e57]:
+                  - row [ref=f11e58]:
+                    - 'columnheader "Usuario: activar para ordenar de forma descendente" [ref=f11e59] [cursor=pointer]': ↑ Usuario ↓
+                    - 'columnheader "Nombre: activar para ordenar de forma ascendente" [ref=f11e60] [cursor=pointer]': ↑ Nombre ↓
+                    - 'columnheader "Rol: activar para ordenar de forma ascendente" [ref=f11e61] [cursor=pointer]': ↑ Rol ↓
+                    - 'columnheader "Estado: activar para ordenar de forma ascendente" [ref=f11e62] [cursor=pointer]': ↑ Estado ↓
+                    - 'columnheader "Último ingreso: activar para ordenar de forma ascendente" [ref=f11e63] [cursor=pointer]': ↑ Último ingreso ↓
+                    - 'columnheader "Acciones: activar para ordenar de forma ascendente" [ref=f11e64] [cursor=pointer]': ↑ Acciones ↓
+                - rowgroup [ref=f11e65]:
+                  - row [ref=f11e66]:
+                    - columnheader "Usuario" [ref=f11e67]
+                    - columnheader "Nombre" [ref=f11e68]
+                    - columnheader "Rol" [ref=f11e69]
+                    - columnheader "Estado" [ref=f11e70]
+                    - columnheader "Último ingreso" [ref=f11e71]
+                    - columnheader "Acciones" [ref=f11e72]
+                - rowgroup [ref=f11e73]:
+                  - row [ref=f11e74]:
+                    - gridcell [ref=f11e75]:
+                      - link "admin" [ref=f11e76] [cursor=pointer]:
+                        - /url: /usuarios/1/
+                    - gridcell "—" [ref=f11e77]
+                    - gridcell "Superusuario" [ref=f11e78]
+                    - gridcell "Activo" [ref=f11e80]
+                    - gridcell "11/11/2026 11:00" [ref=f11e82]
+                    - gridcell [ref=f11e83]
+                  - row [ref=f11e84]:
+                    - gridcell [ref=f11e85]:
+                      - link "bloqueo" [ref=f11e86] [cursor=pointer]:
+                        - /url: /usuarios/3/
+                    - gridcell "—" [ref=f11e87]
+                    - gridcell "Sin rol" [ref=f11e88]
+                    - gridcell "Activo" [ref=f11e90]
+                    - gridcell "11/11/2026 11:00" [ref=f11e92]
+                    - gridcell [ref=f11e93]:
+                      - link "Ver ficha" [ref=f11e94] [cursor=pointer]:
+                        - /url: /usuarios/3/
+                  - row [ref=f11e95]:
+                    - gridcell [ref=f11e96]:
+                      - link "cobrador" [ref=f11e97] [cursor=pointer]:
+                        - /url: /usuarios/2/
+                    - gridcell "—" [ref=f11e98]
+                    - gridcell "Sin rol" [ref=f11e99]
+                    - gridcell "Activo" [ref=f11e101]
+                    - gridcell "11/11/2026 10:58" [ref=f11e103]
+                    - gridcell [ref=f11e104]:
+                      - link "Ver ficha" [ref=f11e105] [cursor=pointer]:
+                        - /url: /usuarios/2/
+                  - row [ref=f11e106]:
+                    - gridcell [ref=f11e107]:
+                      - link "demo_admin" [ref=f11e108] [cursor=pointer]:
+                        - /url: /usuarios/5/
+                    - gridcell "Ada Restrepo" [ref=f11e109]
+                    - gridcell "Administrador" [ref=f11e110]
+                    - gridcell "Activo" [ref=f11e112]
+                    - gridcell "11/11/2026 12:06" [ref=f11e114]
+                    - gridcell [ref=f11e115]:
+                      - link "Ver ficha" [ref=f11e116] [cursor=pointer]:
+                        - /url: /usuarios/5/
+                  - row [ref=f11e117]:
+                    - gridcell [ref=f11e118]:
+                      - link "demo_cobrador" [ref=f11e119] [cursor=pointer]:
+                        - /url: /usuarios/6/
+                    - gridcell "Carlos Ruiz" [ref=f11e120]
+                    - gridcell "Cajero/Cobrador" [ref=f11e121]
+                    - gridcell "Bloqueado" [ref=f11e123]
+                    - gridcell "Nunca" [ref=f11e125]
+                    - gridcell [ref=f11e126]:
+                      - link "Ver ficha" [ref=f11e127] [cursor=pointer]:
+                        - /url: /usuarios/6/
+                  - row [ref=f11e128]:
+                    - gridcell [ref=f11e129]:
+                      - link "demo_consulta" [ref=f11e130] [cursor=pointer]:
+                        - /url: /usuarios/7/
+                    - gridcell "Lucía Gómez" [ref=f11e131]
+                    - gridcell "Consulta" [ref=f11e132]
+                    - gridcell "Activo" [ref=f11e134]
+                    - gridcell "Nunca" [ref=f11e136]
+                    - gridcell [ref=f11e137]:
+                      - link "Ver ficha" [ref=f11e138] [cursor=pointer]:
+                        - /url: /usuarios/7/
+                  - row [ref=f11e139]:
+                    - gridcell [ref=f11e140]:
+                      - link "demo_nuevo" [ref=f11e141] [cursor=pointer]:
+                        - /url: /usuarios/8/
+                    - gridcell "Nora Velásquez" [ref=f11e142]
+                    - gridcell "Supervisor" [ref=f11e143]
+                    - gridcell "Activo" [ref=f11e145]
+                    - gridcell "Nunca" [ref=f11e147]
+                    - gridcell [ref=f11e148]:
+                      - link "Ver ficha" [ref=f11e149] [cursor=pointer]:
+                        - /url: /usuarios/8/
+              - generic [ref=f11e150]:
+                - status [ref=f11e152]: Mostrando 1 a 7 de 7 registros
+                - list [ref=f11e155]:
+                  - listitem [ref=f11e156]:
+                    - link "Anterior":
+                      - /url: "#"
+                  - listitem [ref=f11e157]:
+                    - link "1" [ref=f11e158] [cursor=pointer]:
+                      - /url: "#"
+                  - listitem [ref=f11e159]:
+                    - link "Siguiente":
+                      - /url: "#"
+      - contentinfo [ref=f11e160]:
+        - generic [ref=f11e161]: Copyright © Gestión de préstamos 2026
+  - text: 

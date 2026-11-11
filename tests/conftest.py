@@ -37,13 +37,21 @@ def make_user(db):
     Por defecto el usuario no tiene que cambiar la contraseña, para que las
     pruebas que no tratan de eso no pasen por el middleware de cambio
     obligatorio. Cualquier campo se puede cambiar con un argumento.
+
+    `role` asigna uno de los cuatro roles (SPEC 04); por defecto no tiene rol.
+    Los grupos ya existen porque `migrate` los crea con `sync_roles`.
     """
+    from django.contrib.auth.models import Group
+
     from apps.accounts.models import User
 
-    def factory(username: str = "cobrador", **fields: Any) -> User:
+    def factory(username: str = "cobrador", *, role: Any = None, **fields: Any) -> User:
         fields.setdefault("password", VALID_PASSWORD)
         fields.setdefault("must_change_password", False)
-        return User.objects.create_user(username=username, **fields)
+        user = User.objects.create_user(username=username, **fields)
+        if role is not None:
+            user.groups.add(Group.objects.get(name=role))
+        return user
 
     return factory
 

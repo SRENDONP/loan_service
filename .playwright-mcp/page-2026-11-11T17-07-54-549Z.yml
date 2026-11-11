@@ -1,0 +1,51 @@
+- generic [active] [ref=f15e1]:
+  - generic [ref=f15e2]:
+    - list [ref=f15e3]:
+      - link "" [ref=f15e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f15e7]
+      - listitem [ref=f15e8]:
+        - link " Inicio" [ref=f15e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f15e10]: 
+          - generic [ref=f15e11]: Inicio
+      - separator [ref=f15e12]
+      - generic [ref=f15e13]: Administración
+      - listitem [ref=f15e14]:
+        - link " Usuarios" [ref=f15e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f15e16]: 
+          - generic [ref=f15e17]: Usuarios
+      - separator [ref=f15e18]
+      - generic [ref=f15e19]: Desarrollo
+      - listitem [ref=f15e20]:
+        - link " Componentes" [ref=f15e21] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f15e22]: 
+          - generic [ref=f15e23]: Componentes
+      - text: 
+    - generic [ref=f15e24]:
+      - generic [ref=f15e25]:
+        - navigation [ref=f15e26]:
+          - button "Mostrar u ocultar el menú" [ref=f15e27] [cursor=pointer]:
+            - generic [ref=f15e28]: 
+          - list [ref=f15e29]:
+            - listitem [ref=f15e30]:
+              - button [ref=f15e31] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f15e32]: 
+              - text:  
+        - generic [ref=f15e33]:
+          - heading "Desactivar a demo_nuevo" [level=1] [ref=f15e34]
+          - generic [ref=f15e38]:
+            - paragraph [ref=f15e39]: "El usuario no podrá entrar al sistema y sus sesiones abiertas se cerrarán ahora. No se borra: puedes reactivarlo desde su ficha."
+            - generic [ref=f15e40]:
+              - generic [ref=f15e41]:
+                - generic [ref=f15e42]: "Motivo:"
+                - textbox "Motivo:" [ref=f15e43]
+                - generic [ref=f15e44]: Obligatorio. Hasta 500 caracteres. Queda en la ficha del usuario.
+              - button "Desactivar usuario" [ref=f15e45] [cursor=pointer]
+              - link "Cancelar" [ref=f15e46] [cursor=pointer]:
+                - /url: /usuarios/8/
+      - contentinfo [ref=f15e47]:
+        - generic [ref=f15e48]: Copyright © Gestión de préstamos 2026
+  - text: 

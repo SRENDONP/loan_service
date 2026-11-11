@@ -1,4 +1,4 @@
-"""Formularios de autenticación (SPEC 03)."""
+"""Formularios de autenticación (SPEC 03) y de gestión de usuarios (SPEC 04)."""
 
 from typing import Any
 
@@ -7,8 +7,10 @@ from django.contrib.auth import forms as auth_forms
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import gettext_lazy as _
 
-from apps.accounts.models import User
+from apps.accounts.models import DocumentType, User
+from apps.accounts.roles import Role
 from apps.accounts.services import (
+    DEACTIVATION_REASON_MAX_LENGTH,
     authenticate_with_lockout,
     clear_failed_attempts,
     mark_password_changed,
@@ -123,3 +125,123 @@ class SetPasswordForm(AuthPageFormMixin, auth_forms.SetPasswordForm):
             clear_failed_attempts(user)
             mark_password_changed(user)
         return user
+
+
+# --- Gestión de usuarios (SPEC 04) -----------------------------------------
+
+
+class UserFormMixin:
+    """
+    Campos comunes de la creación y la edición de usuarios.
+
+    Valida con las reglas del modelo (correo único, celular, documento). Las
+    reglas de negocio (rol propio, último administrador, superusuarios) las
+    aplican los servicios, que la vista llama con `cleaned_data`.
+    """
+
+    fields: dict[str, forms.Field]
+
+    def setup_user_fields(self) -> None:
+        self.fields["first_name"].label = _("Nombres")
+        self.fields["last_name"].label = _("Apellidos")
+        for name in ("first_name", "last_name"):
+            self.fields[name].required = True
+        self.fields["phone"].help_text = _(
+            "Opcional. Celular de 10 dígitos que empieza por 3."
+        )
+        self.fields["document_number"].help_text = _(
+            "Opcional. Sin puntos ni espacios. Si lo escribes, elige también el tipo."
+        )
+        self.fields["document_type"].choices = [
+            ("", _("Sin documento")),
+            *DocumentType.choices,
+        ]
+
+
+class UserCreateForm(UserFormMixin, forms.ModelForm):
+    role = forms.ChoiceField(label=_("Rol"), choices=Role.choices)
+
+    field_order = [
+        "username",
+        "first_name",
+        "last_name",
+        "role",
+        "email",
+        "phone",
+        "document_type",
+        "document_number",
+    ]
+
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "document_type",
+            "document_number",
+        )
+        help_texts = {
+            "username": _(
+                "Con él entra al sistema y no se puede cambiar después. Letras, "
+                'números, ".", "_" y "-".'
+            ),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.setup_user_fields()
+
+
+class UserUpdateForm(UserFormMixin, forms.ModelForm):
+    """
+    Edición de un usuario. No incluye `username`, que no cambia.
+
+    Si el usuario se edita a sí mismo, el rol queda deshabilitado: Django ignora
+    lo que llegue en el POST para un campo deshabilitado y usa el valor inicial.
+    """
+
+    role = forms.ChoiceField(label=_("Rol"), choices=Role.choices)
+
+    field_order = [
+        "first_name",
+        "last_name",
+        "role",
+        "email",
+        "phone",
+        "document_type",
+        "document_number",
+    ]
+
+    class Meta:
+        model = User
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "document_type",
+            "document_number",
+        )
+
+    def __init__(self, *args: Any, editing_self: bool = False, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.setup_user_fields()
+        if editing_self:
+            self.fields["role"].disabled = True
+            self.fields["role"].help_text = _("No puedes cambiar tu propio rol.")
+
+
+class UserDeactivateForm(forms.Form):
+    """Motivo obligatorio de la desactivación (SPEC 04, §3.7)."""
+
+    reason = forms.CharField(
+        label=_("Motivo"),
+        max_length=DEACTIVATION_REASON_MAX_LENGTH,
+        widget=forms.Textarea(attrs={"rows": 4}),
+        help_text=_(
+            "Obligatorio. Hasta 500 caracteres. Queda en la ficha del usuario."
+        ),
+    )

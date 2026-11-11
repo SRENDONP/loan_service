@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Ficha de un usuario (SPEC 04, §3.7). Referencias: blank.html y cards.html.
+{% endcomment %}
+
+{% block title %}{{ target.username }}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-2 mb-sm-0 text-gray-800">{{ target.get_full_name|default:target.username }}</h1>
+    <div>
+      <a href="{% url 'accounts:user_list' %}" class="btn btn-sm btn-light shadow-sm">
+        <i class="fas fa-arrow-left fa-sm text-gray-600"></i> {% translate "Volver a usuarios" %}
+      </a>
+      {% if perms.accounts.change_user and not target.is_superuser %}
+        <a href="{% url 'accounts:user_update' target.pk %}" class="btn btn-sm btn-primary shadow-sm">
+          <i class="fas fa-pen fa-sm text-white-50"></i> {% translate "Editar" %}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if target.is_superuser %}
+    <div class="alert alert-info" role="status">
+      {% translate "Esta cuenta es de superusuario. Se gestiona solo por consola o desde el admin técnico, no desde aquí." %}
+    </div>
+  {% endif %}
+
+  <div class="row">
+
+    <div class="col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Datos del usuario" %}</h2>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">{% translate "Nombre de usuario" %}</dt>
+            <dd class="col-sm-7">{{ target.username }}</dd>
+            <dt class="col-sm-5">{% translate "Nombres" %}</dt>
+            <dd class="col-sm-7">{{ target.first_name|default:"—" }}</dd>
+            <dt class="col-sm-5">{% translate "Apellidos" %}</dt>
+            <dd class="col-sm-7">{{ target.last_name|default:"—" }}</dd>
+            <dt class="col-sm-5">{% translate "Correo electrónico" %}</dt>
+            <dd class="col-sm-7 text-break">{{ target.email|default:"—" }}</dd>
+            <dt class="col-sm-5">{% translate "Teléfono celular" %}</dt>
+            <dd class="col-sm-7">{{ target.phone|default:"—" }}</dd>
+            <dt class="col-sm-5">{% translate "Documento" %}</dt>
+            <dd class="col-sm-7 mb-0">
+              {% if target.document_number %}{{ target.document_type }} {{ target.document_number }}{% else %}—{% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Acceso" %}</h2>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-5">{% translate "Rol" %}</dt>
+            <dd class="col-sm-7">{{ role_badge }}</dd>
+            <dt class="col-sm-5">{% translate "Estado" %}</dt>
+            <dd class="col-sm-7">{{ status_badge }}</dd>
+            {% if locked_until_display %}
+              <dt class="col-sm-5">{% translate "Bloqueado hasta" %}</dt>
+              <dd class="col-sm-7">{{ locked_until_display }}</dd>
+            {% endif %}
+            <dt class="col-sm-5">{% translate "Último ingreso" %}</dt>
+            <dd class="col-sm-7">{{ last_login_display }}</dd>
+            <dt class="col-sm-5">{% translate "Cambio de contraseña" %}</dt>
+            <dd class="col-sm-7 mb-0">
+              {% if target.must_change_password %}{% translate "Pendiente en su próximo ingreso" %}{% else %}{% translate "No pendiente" %}{% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% if not target.is_active %}
+    <div class="card border-left-secondary shadow mb-4">
+      <div class="card-body">
+        <h2 class="h6 font-weight-bold text-gray-800">{% translate "Desactivación" %}</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-3">{% translate "Fecha" %}</dt>
+          <dd class="col-sm-9">{{ deactivated_at_display }}</dd>
+          <dt class="col-sm-3">{% translate "Desactivado por" %}</dt>
+          <dd class="col-sm-9">{{ target.deactivated_by.username|default:"—" }}</dd>
+          <dt class="col-sm-3">{% translate "Motivo" %}</dt>
+          <dd class="col-sm-9 mb-0 text-break">{{ target.deactivation_reason|default:"—"|linebreaksbr }}</dd>
+        </dl>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if show_actions %}
+    <!-- Acciones: cada una pide confirmación; los permisos y las reglas se verifican en el servidor. -->
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Acciones" %}</h2>
+      </div>
+      <div class="card-body d-flex flex-wrap align-items-start pb-2">
+        {% if target.is_active %}
+          {% if perms.accounts.reset_user_password %}
+            <form method="post" action="{% url 'accounts:user_reset_password' target.pk %}" class="mb-2 mr-2"
+                  data-confirm="{% blocktranslate with username=target.username %}Se generará una contraseña temporal nueva para {{ username }} y se cerrarán sus sesiones. ¿Continuar?{% endblocktranslate %}"
+                  data-confirm-button="{% translate 'Restablecer contraseña' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-warning btn-icon-split">
+                <span class="icon text-white-50"><i class="fas fa-key"></i></span>
+                <span class="text">{% translate "Restablecer contraseña" %}</span>
+              </button>
+            </form>
+          {% endif %}
+          {% if perms.accounts.unlock_user and target.status == "locked" %}
+            <form method="post" action="{% url 'accounts:user_unlock' target.pk %}" class="mb-2 mr-2"
+                  data-confirm="{% blocktranslate with username=target.username %}¿Quitar el bloqueo de la cuenta de {{ username }}?{% endblocktranslate %}"
+                  data-confirm-button="{% translate 'Desbloquear' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-info btn-icon-split">
+                <span class="icon text-white-50"><i class="fas fa-unlock"></i></span>
+                <span class="text">{% translate "Desbloquear" %}</span>
+              </button>
+            </form>
+          {% endif %}
+          {% if perms.accounts.logout_user_sessions %}
+            <form method="post" action="{% url 'accounts:user_logout_sessions' target.pk %}" class="mb-2 mr-2"
+                  data-confirm="{% blocktranslate with username=target.username %}Se cerrarán todas las sesiones abiertas de {{ username }}. Podrá volver a entrar con su contraseña. ¿Continuar?{% endblocktranslate %}"
+                  data-confirm-button="{% translate 'Cerrar sesiones' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary btn-icon-split">
+                <span class="icon text-white-50"><i class="fas fa-sign-out-alt"></i></span>
+                <span class="text">{% translate "Cerrar sesiones" %}</span>
+              </button>
+            </form>
+          {% endif %}
+          {% if perms.accounts.deactivate_user %}
+            <a href="{% url 'accounts:user_deactivate' target.pk %}" class="btn btn-danger btn-icon-split mb-2">
+              <span class="icon text-white-50"><i class="fas fa-user-slash"></i></span>
+              <span class="text">{% translate "Desactivar" %}</span>
+            </a>
+          {% endif %}
+        {% elif perms.accounts.deactivate_user %}
+          <form method="post" action="{% url 'accounts:user_reactivate' target.pk %}" class="mb-2"
+                data-confirm="{% blocktranslate with username=target.username %}{{ username }} podrá volver a entrar y deberá cambiar su contraseña en el próximo ingreso. ¿Reactivar?{% endblocktranslate %}"
+                data-confirm-button="{% translate 'Reactivar' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success btn-icon-split">
+              <span class="icon text-white-50"><i class="fas fa-user-check"></i></span>
+              <span class="text">{% translate "Reactivar" %}</span>
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% elif is_self %}
+    <p class="small text-gray-700">
+      {% translate "Esta es tu cuenta. Para cambiar tu contraseña usa la opción Cambiar contraseña del menú de usuario." %}
+    </p>
+  {% endif %}
+{% endblock %}

@@ -115,7 +115,7 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 - **Decisiones previas:**
   - **Enmienda de la §4** para usar Python 3.14 y Django 6.1 (D2).
   - **ADR-001:** un solo negocio preparado para crecer (D1).
-  - **ADR-002:** librería de PDF (WeasyPrint, xhtml2pdf o ReportLab). Se usa desde la 015.
+  - **ADR-003:** librería de PDF (WeasyPrint, xhtml2pdf o ReportLab). Se usa desde la 015. Era el ADR-002, pero ese número lo tomó la sincronización de roles de la SPEC 04.
   - Proveedor de CI.
 - **Criterio clave:** `docker-compose up` levanta la app y `uv run pytest` pasa en limpio.
 
@@ -150,6 +150,11 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - Utilidades de permisos para vistas y servicios.
   - Menú filtrado por rol.
 - **Nota:** aquí se define qué es "un cobrador", porque créditos, pagos, cierre y dashboard filtran por él.
+- **Implementada como SPEC 04 (`specs/04-usuarios-roles-permisos.md`).** Decisiones que afectan a las specs siguientes:
+  - Cada usuario tiene exactamente un rol. Los permisos de cada rol están en `ROLE_PERMISSIONS` (`apps/accounts/roles.py`), y `sync_roles` los aplica después de cada `migrate` (ADR-002). **Cada spec que cree un módulo agrega ahí los permisos de sus modelos.**
+  - "Cobrador" es un usuario activo, que no es superusuario, con el rol Cajero/Cobrador (`User.objects.collectors()`). No hay relación entre supervisor y cobradores: todo supervisor ve a todos.
+  - El usuario tiene teléfono y documento. El tipo de documento usa opciones fijas (`CC`, `CE`, `PPT`, `PA` y `TI`); la 005 decide si pasa al catálogo de tipos de documento.
+  - Las acciones sobre usuarios (crear, editar, desactivar con motivo, reactivar, desbloquear, restablecer la contraseña y cerrar sesiones) pasan por servicios que reciben al `actor`. La 004 (auditoría) los audita desde ahí.
 
 #### 004 · Auditoría base
 - **Incluye:**

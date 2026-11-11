@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Desactivación de un usuario con motivo (SPEC 04, §3.7). Referencia: blank.html.
+{% endcomment %}
+
+{% block title %}{% translate "Desactivar usuario" %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% blocktranslate with username=target.username %}Desactivar a {{ username }}{% endblocktranslate %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card border-left-danger shadow mb-4">
+        <div class="card-body">
+          <p class="text-gray-800">
+            {% translate "El usuario no podrá entrar al sistema y sus sesiones abiertas se cerrarán ahora. No se borra: puedes reactivarlo desde su ficha." %}
+          </p>
+          <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-danger">{% translate "Desactivar usuario" %}</button>
+            <a href="{% url 'accounts:user_detail' target.pk %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

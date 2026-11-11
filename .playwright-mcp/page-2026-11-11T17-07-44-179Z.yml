@@ -1,0 +1,93 @@
+- generic [active] [ref=f12e1]:
+  - generic [ref=f12e2]:
+    - list [ref=f12e3]:
+      - link "" [ref=f12e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f12e7]
+      - listitem [ref=f12e8]:
+        - link " Inicio" [ref=f12e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f12e10]: 
+          - generic [ref=f12e11]: Inicio
+      - separator [ref=f12e12]
+      - generic [ref=f12e13]: Administración
+      - listitem [ref=f12e14]:
+        - link " Usuarios" [ref=f12e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f12e16]: 
+          - generic [ref=f12e17]: Usuarios
+      - separator [ref=f12e18]
+      - generic [ref=f12e19]: Desarrollo
+      - listitem [ref=f12e20]:
+        - link " Componentes" [ref=f12e21] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f12e22]: 
+          - generic [ref=f12e23]: Componentes
+      - text: 
+    - generic [ref=f12e24]:
+      - generic [ref=f12e25]:
+        - navigation [ref=f12e26]:
+          - button "Mostrar u ocultar el menú" [ref=f12e27] [cursor=pointer]:
+            - generic [ref=f12e28]: 
+          - list [ref=f12e29]:
+            - listitem [ref=f12e30]:
+              - button [ref=f12e31] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f12e32]: 
+              - text:  
+        - generic [ref=f12e33]:
+          - generic [ref=f12e34]:
+            - heading "Nora Velásquez" [level=1] [ref=f12e35]
+            - generic [ref=f12e36]:
+              - link " Volver a usuarios" [ref=f12e37] [cursor=pointer]:
+                - /url: /usuarios/
+                - generic [ref=f12e38]: 
+                - text: Volver a usuarios
+              - link " Editar" [ref=f12e39] [cursor=pointer]:
+                - /url: /usuarios/8/editar/
+                - generic [ref=f12e40]: 
+                - text: Editar
+          - generic [ref=f12e41]:
+            - generic [ref=f12e43]:
+              - heading "Datos del usuario" [level=2] [ref=f12e45]
+              - generic [ref=f12e47]:
+                - term [ref=f12e48]: Nombre de usuario
+                - definition [ref=f12e49]: demo_nuevo
+                - term [ref=f12e50]: Nombres
+                - definition [ref=f12e51]: Nora
+                - term [ref=f12e52]: Apellidos
+                - definition [ref=f12e53]: Velásquez
+                - term [ref=f12e54]: Correo electrónico
+                - definition [ref=f12e55]: —
+                - term [ref=f12e56]: Teléfono celular
+                - definition [ref=f12e57]: "3105556677"
+                - term [ref=f12e58]: Documento
+                - definition [ref=f12e59]: —
+            - generic [ref=f12e61]:
+              - heading "Acceso" [level=2] [ref=f12e63]
+              - generic [ref=f12e65]:
+                - term [ref=f12e66]: Rol
+                - definition [ref=f12e67]:
+                  - generic [ref=f12e68]: Supervisor
+                - term [ref=f12e69]: Estado
+                - definition [ref=f12e70]:
+                  - generic [ref=f12e71]: Activo
+                - term [ref=f12e72]: Último ingreso
+                - definition [ref=f12e73]: Nunca
+                - term [ref=f12e74]: Cambio de contraseña
+                - definition [ref=f12e75]: Pendiente en su próximo ingreso
+          - generic [ref=f12e76]:
+            - heading "Acciones" [level=2] [ref=f12e78]
+            - generic [ref=f12e79]:
+              - button " Restablecer contraseña" [ref=f12e81] [cursor=pointer]:
+                - generic [ref=f12e82]: 
+                - generic [ref=f12e84]: Restablecer contraseña
+              - button " Cerrar sesiones" [ref=f12e86] [cursor=pointer]:
+                - generic [ref=f12e87]: 
+                - generic [ref=f12e89]: Cerrar sesiones
+              - link " Desactivar" [ref=f12e90] [cursor=pointer]:
+                - /url: /usuarios/8/desactivar/
+                - generic [ref=f12e91]: 
+                - generic [ref=f12e93]: Desactivar
+      - contentinfo [ref=f12e94]:
+        - generic [ref=f12e95]: Copyright © Gestión de préstamos 2026
+  - text: 
