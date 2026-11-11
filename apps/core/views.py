@@ -4,6 +4,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_not_required
 from django.contrib.messages.storage.base import Message
 from django.db import DatabaseError, connection
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
@@ -42,6 +43,7 @@ def home(request: HttpRequest) -> HttpResponse:
     return render(request, "core/home.html")
 
 
+@login_not_required
 @require_GET
 def health(request: HttpRequest) -> JsonResponse:
     """

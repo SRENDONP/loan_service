@@ -134,10 +134,12 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - Recuperación de contraseña por correo.
   - Cambio obligatorio de contraseña en el primer ingreso.
   - Bloqueo después de N intentos fallidos.
-  - Cierre de sesión por inactividad.
   - Validadores de complejidad y hashing con Argon2.
-- **Nota:** el número de intentos y el tiempo de sesión se leen de un servicio de parámetros con valores por defecto (5 intentos, 30 minutos). La spec 005 los vuelve editables.
-- **Decisión previa:** servidor de correo (en desarrollo basta la consola).
+- **Nota:** el número de intentos y la política de contraseñas se leen de un servicio de parámetros con valores por defecto (5 intentos, 15 minutos de bloqueo). La spec 005 los vuelve editables.
+- **Implementada como SPEC 03 (`specs/03-autenticacion.md`).** El correo de recuperación es simulado (consola o archivo), sin SMTP en ningún entorno.
+- **Salió de esta spec y queda pendiente de ubicar:**
+  - **Cierre de sesión por inactividad (§6.1).** Lo decidió la persona al escribir la SPEC 03. Mientras tanto, la sesión se cierra al cerrar el navegador y dura como máximo 12 horas, fijo en los settings. La spec que lo implemente también hace parametrizable la duración de la sesión.
+  - **Trato uniforme en los textos (tú o usted).** Los textos propios usan "tú", pero varios textos de Django que se ven en las pantallas de contraseña usan "usted" (SPEC 03, §4.1). Resolverlo exige sobrescribir textos de Django.
 
 #### 003 · Usuarios, roles y permisos
 - **Incluye:**

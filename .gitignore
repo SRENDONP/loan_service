@@ -13,6 +13,9 @@ db.sqlite3
 media/
 staticfiles/
 
+# Correos simulados (EMAIL_BACKEND=file) y otros temporales
+tmp/
+
 # Pruebas y cobertura
 .pytest_cache/
 .coverage

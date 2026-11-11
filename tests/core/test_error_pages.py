@@ -19,6 +19,7 @@ def forbidden_view(request: HttpRequest) -> HttpResponse:
 # Las rutas reales más una vista de prueba que lanza PermissionDenied.
 urlpatterns = [
     path("", include("apps.core.urls")),
+    path("", include("apps.accounts.urls")),
     path("admin/", admin.site.urls),
     path("prohibido/", forbidden_view, name="forbidden"),
 ]
@@ -56,8 +57,8 @@ def test_404_uses_layout_and_spanish_text(client):
     assert_no_leaks(html)
 
 
-def test_403_on_permission_denied(client):
-    response = client.get(reverse("forbidden"))
+def test_403_on_permission_denied(auth_client):
+    response = auth_client.get(reverse("forbidden"))
 
     assert response.status_code == 403
     assert "403.html" in template_names(response)

@@ -36,12 +36,17 @@ construyen con desarrollo guiado por especificaciones (SDD): ver [Flujo de traba
    PostgreSQL. Está listo cuando `docker compose ps` muestra los dos servicios como
    `(healthy)`.
 
-3. Crea un usuario administrador para entrar al admin de Django (solo la primera vez, o
-   después de un `docker compose down -v`):
+3. Crea el primer superusuario (solo la primera vez, o después de un
+   `docker compose down -v`). Todo el sistema exige sesión, así que sin este usuario no
+   puedes entrar:
 
    ```bash
    docker compose exec web python manage.py createsuperuser
    ```
+
+   Entra en <http://localhost:8000/ingresar/> con su nombre de usuario o su correo. El
+   superusuario creado así no tiene que cambiar la contraseña; cualquier otro usuario sí,
+   en su primer ingreso.
 
 Esto levanta dos servicios:
 
@@ -52,15 +57,47 @@ Esto levanta dos servicios:
 
 ### Qué puedes ver hoy
 
-La interfaz usa el layout de SB Admin 2 (SPEC 02). Todavía no hay módulos de negocio ni
-inicio de sesión propio, así que las páginas son públicas. Puedes abrir:
+La interfaz usa el layout de SB Admin 2 (SPEC 02) y todo el sistema exige sesión (SPEC 03).
+Todavía no hay módulos de negocio. Puedes abrir:
 
 | URL | Qué muestra |
 |---|---|
-| <http://localhost:8000/> | La página "Inicio", dentro del layout: barra lateral con el menú, topbar y pie de página. |
+| <http://localhost:8000/ingresar/> | El inicio de sesión, con usuario o correo. Sin sesión, cualquier página te trae aquí. Tras 5 intentos fallidos seguidos, la cuenta se bloquea 15 minutos. |
+| <http://localhost:8000/> | La página "Inicio", dentro del layout: barra lateral con el menú, topbar y pie de página. El menú del usuario (arriba a la derecha) tiene "Cambiar contraseña" y "Cerrar sesión". |
+| <http://localhost:8000/contrasena/recuperar/> | La recuperación de contraseña por correo. El correo es simulado: mira [Correos simulados](#correos-simulados). |
 | <http://localhost:8000/componentes/> | El catálogo de componentes compartidos (mensajes, formulario, modal de confirmación, botones y tabla con DataTables), con datos de ejemplo. **Solo existe con `DEBUG=True`**; sin DEBUG responde 404 y no aparece en el menú. |
-| <http://localhost:8000/health/> | `{"status": "ok", "database": "ok"}`. Si la base de datos no responde, devuelve 503. |
-| <http://localhost:8000/admin/> | El admin de Django, en español. Entra con el usuario que creaste con `createsuperuser`. Con esa sesión, el layout muestra el menú del usuario y "Cerrar sesión". |
+| <http://localhost:8000/health/> | `{"status": "ok", "database": "ok"}`. Es público. Si la base de datos no responde, devuelve 503. |
+| <http://localhost:8000/admin/> | El admin de Django, en español. Solo entran superusuarios, y el ingreso pasa por el login propio. Por ahora es el único lugar para crear usuarios (la SPEC 04 trae la pantalla propia). |
+
+### Correos simulados
+
+No hay servidor de correo (SMTP) en ningún entorno. La variable `EMAIL_BACKEND` elige dónde
+queda el correo, por ejemplo el de recuperación de contraseña:
+
+- **`console`** (por defecto): se imprime en el log. Con Docker, míralo con
+  `docker compose logs web`; con `runserver`, en la misma terminal.
+- **`file`**: se guarda un archivo por correo en `EMAIL_FILE_PATH` (por defecto `tmp/emails/`,
+  que git ignora).
+
+El cuerpo sale codificado en *quoted-printable*: las líneas largas terminan en `=` y la "ñ"
+aparece como `=C3=B1`. Para usar el enlace de recuperación, une las líneas quitando el `=`
+del final. El enlace sirve una sola vez, vence en una hora y, al usarlo, desbloquea la
+cuenta.
+
+### Recrear la base de datos local
+
+Si tu base local es de antes de la SPEC 03, `migrate` falla con
+`InconsistentMigrationHistory`, porque la SPEC 03 cambió el modelo de usuario
+(`AUTH_USER_MODEL`). Recréala una vez. **Esto borra todos los datos locales:**
+
+```bash
+docker compose down -v
+docker compose up -d
+docker compose exec web python manage.py createsuperuser
+```
+
+Si trabajas con uv en lugar del contenedor `web`, usa `docker compose up -d db` y
+`uv run python manage.py migrate` antes de `createsuperuser`.
 
 ### Si `web` se detiene
 
@@ -124,6 +161,9 @@ CI, del entorno. La referencia es [`.env.example`](.env.example).
 | `ALLOWED_HOSTS` | Hosts permitidos, separados por comas | Sí, sin valor por defecto |
 | `DATABASE_URL` | `postgres://usuario:clave@host:puerto/base` | Sí, sin valor por defecto |
 | `SECURE_SSL_REDIRECT` | Redirigir a HTTPS en producción (por defecto `True`) | No |
+| `EMAIL_BACKEND` | Correo simulado: `console` (por defecto) o `file`. Otro valor impide arrancar | No |
+| `EMAIL_FILE_PATH` | Carpeta de los correos con `EMAIL_BACKEND=file` (por defecto `tmp/emails`) | No |
+| `DEFAULT_FROM_EMAIL` | Remitente de los correos (por defecto `no-responder@localhost`) | No |
 | `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_PORT` | Configuran el servicio `db` de compose | No aplica |
 
 `manage.py` usa `config.settings.dev` por defecto. `wsgi.py` y `asgi.py` usan
@@ -208,7 +248,7 @@ La entrada cuyo `url_name` coincide con la página actual se marca como activa.
 
 ```
 config/              Settings (base, dev, prod), urls, wsgi y asgi
-apps/                Apps de Django (por ahora, core: layout, menú y /health/)
+apps/                Apps de Django: core (layout, menú y /health/) y accounts (usuario y autenticación)
 tests/               Pruebas con pytest, una carpeta por app
 templates/           Plantillas compartidas: base.html, includes/, forms/ y páginas de error
 static/              Recursos de SB Admin 2 copiados de references/, más app.css y app.js

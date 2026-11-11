@@ -1,0 +1,15 @@
+{% comment %}
+  Campos de un formulario de autenticación con el estilo `form-control-user` de
+  SB Admin 2. Como en login.html, el texto de la etiqueta va como placeholder;
+  la etiqueta se conserva solo para lectores de pantalla.
+{% endcomment %}
+{% include "forms/non_field_errors.html" with errors=form.non_field_errors %}
+{% for field in form.visible_fields %}
+  <div class="form-group">
+    <label class="sr-only" for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% include "forms/field_errors.html" %}
+    {% include "forms/help_text.html" %}
+  </div>
+{% endfor %}
+{% for field in form.hidden_fields %}{{ field }}{% endfor %}
