@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Página no encontrada" %}{% endblock %}
+
+{% block content %}
+  <!-- 404 Error Text -->
+  <div class="text-center">
+    <div class="error mx-auto" data-text="404">404</div>
+    <p class="lead text-gray-800 mb-5">{% translate "Página no encontrada" %}</p>
+    <p class="text-gray-500 mb-0">{% translate "La página que buscas no existe o cambió de dirección." %}</p>
+    <a href="{% url 'core:home' %}">&larr; {% translate "Volver al inicio" %}</a>
+  </div>
+{% endblock %}

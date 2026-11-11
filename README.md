@@ -23,10 +23,25 @@ construyen con desarrollo guiado por especificaciones (SDD): ver [Flujo de traba
 
 ## Puesta en marcha con Docker
 
-```bash
-cp .env.example .env
-docker compose up
-```
+1. Abre Docker Desktop y espera a que diga que el motor está corriendo.
+2. Desde la raíz del repositorio, crea tu archivo de configuración local (solo la primera
+   vez) y levanta el stack:
+
+   ```bash
+   cp .env.example .env
+   docker compose up
+   ```
+
+   La primera vez tarda unos minutos, porque construye la imagen de `web` y descarga
+   PostgreSQL. Está listo cuando `docker compose ps` muestra los dos servicios como
+   `(healthy)`.
+
+3. Crea un usuario administrador para entrar al admin de Django (solo la primera vez, o
+   después de un `docker compose down -v`):
+
+   ```bash
+   docker compose exec web python manage.py createsuperuser
+   ```
 
 Esto levanta dos servicios:
 
@@ -35,8 +50,29 @@ Esto levanta dos servicios:
 | `web` | Django con `runserver`. Aplica las migraciones al arrancar. | 8000 |
 | `db` | PostgreSQL 18, con los datos en el volumen `postgres_data` | `POSTGRES_PORT` (5432 por defecto) |
 
-Comprueba que todo está bien en <http://localhost:8000/health/>. Debe responder
-`{"status": "ok", "database": "ok"}`. Si la base de datos no responde, devuelve 503.
+### Qué puedes ver hoy
+
+La interfaz usa el layout de SB Admin 2 (SPEC 02). Todavía no hay módulos de negocio ni
+inicio de sesión propio, así que las páginas son públicas. Puedes abrir:
+
+| URL | Qué muestra |
+|---|---|
+| <http://localhost:8000/> | La página "Inicio", dentro del layout: barra lateral con el menú, topbar y pie de página. |
+| <http://localhost:8000/componentes/> | El catálogo de componentes compartidos (mensajes, formulario, modal de confirmación, botones y tabla con DataTables), con datos de ejemplo. **Solo existe con `DEBUG=True`**; sin DEBUG responde 404 y no aparece en el menú. |
+| <http://localhost:8000/health/> | `{"status": "ok", "database": "ok"}`. Si la base de datos no responde, devuelve 503. |
+| <http://localhost:8000/admin/> | El admin de Django, en español. Entra con el usuario que creaste con `createsuperuser`. Con esa sesión, el layout muestra el menú del usuario y "Cerrar sesión". |
+
+### Si `web` se detiene
+
+`runserver` se recarga cada vez que cambia un archivo. Si cambias de rama con git mientras
+corre, puede recargarse a mitad del cambio, no encontrar un módulo y terminar con
+`Exited (1)`. Vuelve a levantarlo con:
+
+```bash
+docker compose up -d
+```
+
+Para ver el motivo, revisa `docker compose logs web`.
 
 Comandos útiles:
 
@@ -110,13 +146,72 @@ El CI (GitHub Actions, `.github/workflows/ci.yml`) ejecuta Ruff, Black, la verif
 migraciones, `manage.py check` y pytest contra PostgreSQL 18 en cada push a `main` y en
 cada pull request. Un cambio que falle no se integra (constitución §15.3).
 
+## Interfaz
+
+Todas las pantallas heredan de `templates/base.html`, derivado de `blank.html` de SB Admin 2,
+y definen los bloques `title`, `page_heading`, `content` y, si los necesitan, `extra_css` y
+`extra_js`. Los recursos de la plantilla están copiados en `static/` (nunca se enlaza
+`references/`), y las personalizaciones van en `static/css/app.css` y `static/js/app.js`.
+
+Antes de construir una pantalla, revisa los componentes que ya existen en
+<http://localhost:8000/componentes/> (solo con `DEBUG=True`):
+
+- **Mensajes:** los de `django.contrib.messages` salen como alertas de Bootstrap.
+- **Formularios:** `{{ form }}` ya produce las clases de Bootstrap 4 (`form-control`,
+  `is-invalid`, `invalid-feedback`), gracias a `apps.core.forms.BootstrapFormRenderer` y a las
+  plantillas de `templates/forms/`.
+- **Tablas:** `{% include "includes/datatable.html" %}`. El comentario al principio del archivo
+  explica qué recursos debe cargar la página.
+- **Confirmación:** agrega `data-confirm="¿Pregunta?"` (y, si quieres,
+  `data-confirm-button="Texto del botón"`) a un `<form>` para que pida confirmación antes de
+  enviarse.
+
+### Agregar un módulo al menú
+
+El menú lateral se arma solo: cada app declara sus secciones y entradas en su propio
+`menu.py`, y `apps.core` lo descubre al arrancar. No hay que editar `apps/core` ni los
+settings. Por ejemplo, `apps/clientes/menu.py`:
+
+```python
+from django.utils.translation import gettext_lazy as _
+
+from apps.core.navigation import MenuItem, MenuSection, register, register_section
+
+register_section(MenuSection(key="operacion", label=_("Operación"), order=10))
+
+register(
+    MenuItem(
+        key="clientes.list",
+        label=_("Clientes"),
+        icon="fas fa-fw fa-users",
+        section="operacion",
+        order=10,
+        url_name="clientes:list",
+        permissions=("clientes.view_cliente",),
+    )
+)
+```
+
+- **Secciones:** `label=""` crea una sección sin encabezado. Se ordenan por `order`, y una
+  sección sin entradas visibles no se muestra.
+- **Entradas:** se ordenan por `order` y luego por `key`, que debe ser única. Solo las ve quien
+  tiene todos los `permissions`; con `()` las ve cualquiera.
+- **Submenús:** usa `children=(MenuItem(...), ...)` y deja `url_name=None` en el padre. Solo
+  hay un nivel, y el padre se oculta si ningún hijo es visible.
+- **Solo desarrollo:** `debug_only=True` muestra la entrada solo con DEBUG.
+- **Validación:** una clave repetida, una sección que no existe, un hijo con hijos o una
+  entrada sin `url_name` ni `children` lanzan `ImproperlyConfigured` al arrancar.
+
+La entrada cuyo `url_name` coincide con la página actual se marca como activa.
+
 ## Estructura
 
 ```
 config/              Settings (base, dev, prod), urls, wsgi y asgi
-apps/                Apps de Django (por ahora, core con /health/)
+apps/                Apps de Django (por ahora, core: layout, menú y /health/)
 tests/               Pruebas con pytest, una carpeta por app
-templates/           Plantillas compartidas
+templates/           Plantillas compartidas: base.html, includes/, forms/ y páginas de error
+static/              Recursos de SB Admin 2 copiados de references/, más app.css y app.js
 locale/              Catálogos de traducción (gettext)
 specs/               Specs SDD (NN-slug.md)
 docs/                Hoja de ruta de specs y decisiones (ADR) en docs/decisiones/

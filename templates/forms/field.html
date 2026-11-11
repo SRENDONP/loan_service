@@ -1,0 +1,24 @@
+{% if field.widget_type == "checkbox" %}
+  <div class="form-group">
+    <div class="form-check">
+      {{ field }}
+      <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% include "forms/field_errors.html" %}
+      {% include "forms/help_text.html" %}
+    </div>
+  </div>
+{% elif field.use_fieldset %}
+  <fieldset class="form-group"{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>
+    {% if field.label %}{{ field.legend_tag }}{% endif %}
+    {{ field }}
+    {% include "forms/field_errors.html" %}
+    {% include "forms/help_text.html" %}
+  </fieldset>
+{% else %}
+  <div class="form-group">
+    {% if field.label %}{{ field.label_tag }}{% endif %}
+    {{ field }}
+    {% include "forms/field_errors.html" %}
+    {% include "forms/help_text.html" %}
+  </div>
+{% endif %}

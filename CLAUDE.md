@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. Todavía no hay modelos de negocio ni interfaz: la plantilla SB Admin 2 llega con la SPEC 02.
+Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. Todavía no hay modelos de negocio ni inicio de sesión propio.
 
 La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1 a D16), está en `docs/specs-tentativas.md`. Léela antes de escribir una spec.
 
@@ -53,8 +53,7 @@ Lo que sigue pendiente a propósito, con la spec que lo resuelve:
 
 | Constitución | Estado actual | Dónde se resuelve |
 |---|---|---|
-| Interfaz con SB Admin 2 servida desde `static/` | `references/` existe, pero no hay `static/` ni `base.html` | SPEC 02 |
-| i18n con `gettext` | Base lista (`es-co`, `LOCALE_PATHS`), sin `LocaleMiddleware` ni catálogos | SPEC 02 en adelante |
+| i18n con `gettext` | Los textos usan `gettext` y `{% translate %}` con msgid en español. Todavía no hay `LocaleMiddleware` ni catálogos `.po` (decisión de la SPEC 02) | Cuando haya un segundo idioma |
 | Recuperación de contraseña por correo (§6.1) | Correo por consola solo en `dev`; `prod` usa el SMTP por defecto de Django, sin configurar | Spec de autenticación |
 | HSTS, CSP, respaldos y mínimo privilegio en BD (§14) | `prod` tiene un mínimo seguro; `check --deploy` solo avisa `security.W004` | Spec de endurecimiento |
 
@@ -139,6 +138,44 @@ Reglas:
 - **`js/demo/` solo sirve de ejemplo.** Las gráficas y tablas reciben sus datos del servidor, y el JavaScript nunca calcula valores financieros.
 - **Componentes nuevos:** si hace falta uno que la plantilla no trae, constrúyelo con clases de Bootstrap 4 y de SB Admin 2, siguiendo el estilo de la plantilla.
 - **Verificación con Playwright:** compara cada pantalla con su página de referencia, también en celular (unos 375 px).
+
+Lo que dejó la SPEC 02, y que toda pantalla nueva reutiliza:
+
+- **Layout:** extiende `base.html` y usa los bloques `title`, `page_heading`, `content`, `extra_css` y `extra_js`. `500.html` es independiente a propósito: no uses en ella context processors, el menú ni variables.
+- **Catálogo:** antes de construir una pantalla, revisa `/componentes/` (solo con DEBUG). Ahí están todos los componentes compartidos.
+- **Formularios:** `{{ form }}` ya produce las clases de Bootstrap 4 gracias a `apps.core.forms.BootstrapFormRenderer` y a `templates/forms/`. No agregues django-crispy-forms ni clases a mano en los widgets.
+- **Mensajes:** usa `django.contrib.messages`; `base.html` los muestra como alertas.
+- **Tablas:** usa `includes/datatable.html`. Su comentario dice qué recursos cargar en `extra_css` y `extra_js`, incluido `{% datatables_i18n %}`.
+- **Confirmación:** agrega `data-confirm` a un `<form>` para que pida confirmación. La protección real (permisos y validación) sigue en el servidor.
+- **Nombre del negocio:** sale del context processor `apps.core.context_processors.branding`. No lo escribas fijo en las plantillas.
+
+### Agregar un módulo al menú
+
+Cada app declara su menú en `apps/<app>/menu.py`, y `apps.core` lo descubre al arrancar con `autodiscover_modules("menu")`. No se edita `apps/core` ni los settings:
+
+```python
+from django.utils.translation import gettext_lazy as _
+
+from apps.core.navigation import MenuItem, MenuSection, register, register_section
+
+register_section(MenuSection(key="operacion", label=_("Operación"), order=10))
+
+register(
+    MenuItem(
+        key="clientes.list",
+        label=_("Clientes"),
+        icon="fas fa-fw fa-users",
+        section="operacion",
+        order=10,
+        url_name="clientes:list",
+        permissions=("clientes.view_cliente",),
+    )
+)
+```
+
+- **Permisos:** el menú filtra con `user.has_perms(permissions)`. Ocultar una entrada no protege la vista: la vista y el servicio siguen verificando permisos.
+- **Opciones:** `children` crea un submenú de un solo nivel (con `url_name=None` en el padre), y `debug_only=True` muestra la entrada solo con DEBUG.
+- **Pruebas:** usan un `MenuRegistry` aislado, como `tests/core/test_navigation.py`. No registran entradas en el registro global.
 
 ## Convenciones de código
 

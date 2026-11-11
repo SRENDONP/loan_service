@@ -1,0 +1,49 @@
+{% comment %}
+  Tabla con DataTables (bs4), con la estructura de tables.html.
+
+  Uso:
+    {% include "includes/datatable.html" with table_id="clientes" title=titulo columns=columnas rows=filas %}
+
+  - columns: lista de encabezados.
+  - rows: lista de filas; cada fila, una lista de valores ya calculados y
+    formateados en el servidor. El JavaScript solo ordena, busca y pagina.
+
+  La página carga los recursos de DataTables:
+    {% block extra_css %}
+      <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+    {% endblock %}
+    {% block extra_js %}
+      <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+      <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+      {% datatables_i18n %}   (con {% load datatables %})
+    {% endblock %}
+{% endcomment %}
+<!-- DataTable -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary" id="{{ table_id }}-title">{{ title }}</h6>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-bordered" id="{{ table_id }}" width="100%" cellspacing="0" data-datatable aria-labelledby="{{ table_id }}-title">
+        <thead>
+          <tr>
+            {% for column in columns %}<th>{{ column }}</th>{% endfor %}
+          </tr>
+        </thead>
+        <tfoot>
+          <tr>
+            {% for column in columns %}<th>{{ column }}</th>{% endfor %}
+          </tr>
+        </tfoot>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              {% for value in row %}<td>{{ value }}</td>{% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

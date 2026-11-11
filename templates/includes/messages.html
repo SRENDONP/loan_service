@@ -1,0 +1,9 @@
+{% load i18n %}
+{% for message in messages %}
+  <div class="alert alert-{{ message.level_tag }}{% if message.extra_tags %} {{ message.extra_tags }}{% endif %} alert-dismissible fade show" role="alert">
+    {{ message }}
+    <button type="button" class="close" data-dismiss="alert" aria-label="{% translate 'Cerrar' %}">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{% endfor %}

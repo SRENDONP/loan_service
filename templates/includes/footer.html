@@ -1,0 +1,11 @@
+{% load i18n %}
+<!-- Footer -->
+<footer class="sticky-footer bg-white">
+  <div class="container my-auto">
+    <div class="copyright text-center my-auto">
+      {% now "Y" as current_year %}
+      <span>{% blocktranslate %}Copyright &copy; {{ business_name }} {{ current_year }}{% endblocktranslate %}</span>
+    </div>
+  </div>
+</footer>
+<!-- End of Footer -->

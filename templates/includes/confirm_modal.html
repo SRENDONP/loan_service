@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+  Modal de confirmación global (SPEC 02). Cualquier formulario con
+  data-confirm="¿Texto de la pregunta?" lo abre antes de enviarse, y
+  data-confirm-button="Anular pago" cambia el texto del botón (por defecto,
+  "Confirmar"). Sin JavaScript, el formulario se envía sin confirmar: la
+  protección real de las acciones (permisos y validación) vive en el servidor.
+{% endcomment %}
+<!-- Confirm Modal-->
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-describedby="confirmModalMessage" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">{% translate "Confirma la acción" %}</h5>
+        <button class="close" type="button" data-dismiss="modal" aria-label="{% translate 'Cerrar' %}">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+      <div class="modal-body" id="confirmModalMessage"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-dismiss="modal" id="confirmModalCancel">{% translate "Cancelar" %}</button>
+        <button class="btn btn-primary" type="button" id="confirmModalAccept" data-default-label="{% translate 'Confirmar' %}">{% translate "Confirmar" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
