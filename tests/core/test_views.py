@@ -28,8 +28,8 @@ def nav_item_for(html: str, href: str) -> str:
 
 
 @pytest.mark.django_db
-def test_home_renders_inside_base_layout(client):
-    response = client.get(HOME)
+def test_home_renders_inside_base_layout(auth_client):
+    response = auth_client.get(HOME)
 
     assert response.status_code == 200
     assert "base.html" in [t.name for t in response.templates]
@@ -42,8 +42,8 @@ def test_home_renders_inside_base_layout(client):
 
 
 @pytest.mark.django_db
-def test_home_marks_inicio_as_active(client):
-    html = client.get(HOME).content.decode()
+def test_home_marks_inicio_as_active(auth_client):
+    html = auth_client.get(HOME).content.decode()
 
     assert nav_item_for(html, HOME) == "nav-item active"
     assert "Inicio" in html
@@ -51,30 +51,30 @@ def test_home_marks_inicio_as_active(client):
 
 @pytest.mark.django_db
 def test_topbar_hides_user_menu_for_anonymous(client):
-    html = client.get(HOME).content.decode()
+    # Todas las páginas exigen sesión; la 404 de una ruta inexistente es una de
+    # las pocas que un anónimo ve dentro del layout.
+    html = client.get("/no-existe/").content.decode()
 
+    assert 'class="navbar navbar-expand navbar-light bg-white topbar' in html
     assert 'id="userDropdown"' not in html
     assert 'id="logoutModal"' not in html
 
 
 @pytest.mark.django_db
-def test_topbar_shows_user_menu_when_authenticated(client, django_user_model):
-    user = django_user_model.objects.create_user("cajero1", password="x")
-    client.force_login(user)
+def test_topbar_shows_user_menu_when_authenticated(client, make_user):
+    client.force_login(make_user("cajero1"))
 
     html = client.get(HOME).content.decode()
 
     assert 'id="userDropdown"' in html
     assert 'id="logoutModal"' in html
     assert "cajero1" in html
-    assert f'action="{reverse("admin:logout")}"' in html
+    assert f'action="{reverse("accounts:logout")}"' in html
 
 
 @pytest.mark.django_db
-def test_topbar_has_no_search_alerts_or_messages(client, django_user_model):
-    client.force_login(django_user_model.objects.create_user("u", password="x"))
-
-    html = client.get(HOME).content.decode()
+def test_topbar_has_no_search_alerts_or_messages(auth_client):
+    html = auth_client.get(HOME).content.decode()
 
     assert "alertsDropdown" not in html
     assert "messagesDropdown" not in html
@@ -82,11 +82,11 @@ def test_topbar_has_no_search_alerts_or_messages(client, django_user_model):
 
 
 @pytest.mark.django_db
-def test_empty_sections_do_not_show_their_heading(client, settings):
+def test_empty_sections_do_not_show_their_heading(auth_client, settings):
     """Sin DEBUG, la sección "Desarrollo" queda vacía y no se pinta."""
     settings.DEBUG = False
 
-    html = client.get(HOME).content.decode()
+    html = auth_client.get(HOME).content.decode()
 
     assert "sidebar-heading" not in html
 
@@ -124,6 +124,7 @@ def messages_view(request: HttpRequest) -> HttpResponse:
 
 urlpatterns = [
     path("", include("apps.core.urls")),
+    path("", include("apps.accounts.urls")),
     path("admin/", admin.site.urls),
     path("mensajes/", messages_view, name="messages-demo"),
 ]
@@ -131,8 +132,8 @@ urlpatterns = [
 
 @pytest.mark.django_db
 @pytest.mark.urls("tests.core.test_views")
-def test_each_message_level_renders_as_bootstrap_alert(client):
-    html = client.get("/mensajes/").content.decode()
+def test_each_message_level_renders_as_bootstrap_alert(auth_client):
+    html = auth_client.get("/mensajes/").content.decode()
 
     for level, text in [
         ("success", "Mensaje de éxito"),
@@ -197,8 +198,8 @@ def test_datatable_include_renders_table_structure():
 
 
 @pytest.mark.django_db
-def test_base_layout_includes_single_confirm_modal(client):
-    html = client.get(HOME).content.decode()
+def test_base_layout_includes_single_confirm_modal(auth_client):
+    html = auth_client.get(HOME).content.decode()
 
     assert html.count('id="confirmModal"') == 1
     assert 'data-default-label="Confirmar"' in html
@@ -218,10 +219,10 @@ VALID_FORM = {
 
 
 @pytest.mark.django_db
-def test_components_page_available_with_debug(client, settings):
+def test_components_page_available_with_debug(auth_client, settings):
     settings.DEBUG = True
 
-    response = client.get(COMPONENTS)
+    response = auth_client.get(COMPONENTS)
 
     assert response.status_code == 200
     html = response.content.decode()
@@ -237,17 +238,17 @@ def test_components_page_available_with_debug(client, settings):
 
 
 @pytest.mark.django_db
-def test_components_page_is_404_without_debug(client, settings):
+def test_components_page_is_404_without_debug(auth_client, settings):
     settings.DEBUG = False
 
-    assert client.get(COMPONENTS).status_code == 404
-    assert client.post(COMPONENTS, VALID_FORM).status_code == 404
+    assert auth_client.get(COMPONENTS).status_code == 404
+    assert auth_client.post(COMPONENTS, VALID_FORM).status_code == 404
 
 
 @pytest.mark.django_db
-def test_components_menu_entry_only_with_debug(client, settings):
+def test_components_menu_entry_only_with_debug(auth_client, settings):
     settings.DEBUG = True
-    html = client.get(COMPONENTS).content.decode()
+    html = auth_client.get(COMPONENTS).content.decode()
     assert re.search(
         r'<div class="sidebar-heading">\s*Desarrollo\s*</div>\s*'
         r"(<!--[^>]*-->\s*)?"
@@ -257,16 +258,16 @@ def test_components_menu_entry_only_with_debug(client, settings):
     assert nav_item_for(html, HOME) == "nav-item"
 
     settings.DEBUG = False
-    html = client.get(HOME).content.decode()
+    html = auth_client.get(HOME).content.decode()
     assert COMPONENTS not in html
     assert "Desarrollo" not in html
 
 
 @pytest.mark.django_db
-def test_components_invalid_post_shows_errors(client, settings):
+def test_components_invalid_post_shows_errors(auth_client, settings):
     settings.DEBUG = True
 
-    response = client.post(COMPONENTS, {**VALID_FORM, "email": "no-es-correo"})
+    response = auth_client.post(COMPONENTS, {**VALID_FORM, "email": "no-es-correo"})
 
     assert response.status_code == 200
     html = response.content.decode()
@@ -276,20 +277,20 @@ def test_components_invalid_post_shows_errors(client, settings):
 
 
 @pytest.mark.django_db
-def test_components_valid_post_redirects_with_success_message(client, settings):
+def test_components_valid_post_redirects_with_success_message(auth_client, settings):
     settings.DEBUG = True
 
-    response = client.post(COMPONENTS, VALID_FORM, follow=True)
+    response = auth_client.post(COMPONENTS, VALID_FORM, follow=True)
 
     assert response.redirect_chain == [(COMPONENTS, 302)]
     assert "El formulario de prueba se envió." in response.content.decode()
 
 
 @pytest.mark.django_db
-def test_components_confirm_action_redirects_with_message(client, settings):
+def test_components_confirm_action_redirects_with_message(auth_client, settings):
     settings.DEBUG = True
 
-    response = client.post(COMPONENTS, {"action": "confirm-demo"}, follow=True)
+    response = auth_client.post(COMPONENTS, {"action": "confirm-demo"}, follow=True)
 
     assert response.redirect_chain == [(COMPONENTS, 302)]
     assert "Acción de prueba confirmada." in response.content.decode()

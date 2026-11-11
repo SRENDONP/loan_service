@@ -1,6 +1,6 @@
 {% load i18n %}
 <!-- Logout Modal-->
-{# Por ahora cierra la sesión con la vista del admin. La spec de autenticación cambia solo la URL. #}
+{# El cierre de sesión es solo por POST (SPEC 03). #}
 <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -13,7 +13,7 @@
       <div class="modal-body">{% translate "Selecciona «Cerrar sesión» si quieres terminar tu sesión actual." %}</div>
       <div class="modal-footer">
         <button class="btn btn-secondary" type="button" data-dismiss="modal">{% translate "Cancelar" %}</button>
-        <form method="post" action="{% url 'admin:logout' %}" class="d-inline">
+        <form method="post" action="{% url 'accounts:logout' %}" class="d-inline">
           {% csrf_token %}
           <button class="btn btn-primary" type="submit">{% translate "Cerrar sesión" %}</button>
         </form>

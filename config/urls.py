@@ -18,7 +18,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from apps.accounts.views import admin_login_redirect
+
 urlpatterns = [
+    # El admin usa el login propio (SPEC 03); esta ruta va antes que admin.site.urls.
+    path("admin/login/", admin_login_redirect, name="admin_login_redirect"),
     path("admin/", admin.site.urls),
     path("", include("apps.core.urls")),
+    path("", include("apps.accounts.urls")),
 ]

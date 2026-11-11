@@ -1,0 +1,22 @@
+{% extends "accounts/auth_base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Iniciar sesión" %}{% endblock %}
+
+{% block content %}
+  <div class="text-center">
+    <h1 class="h4 text-gray-900 mb-4">{% translate "Inicia sesión" %}</h1>
+  </div>
+  <form class="user" method="post" action="{% url 'accounts:login' %}">
+    {% csrf_token %}
+    {% include "accounts/includes/user_form_fields.html" %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    <button type="submit" class="btn btn-primary btn-user btn-block">
+      {% translate "Ingresar" %}
+    </button>
+  </form>
+  <hr>
+  <div class="text-center">
+    <a class="small" href="{% url 'accounts:password_reset' %}">{% translate "¿Olvidaste tu contraseña?" %}</a>
+  </div>
+{% endblock %}

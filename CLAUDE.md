@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. Todavía no hay modelos de negocio ni inicio de sesión propio.
+Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. La **SPEC 03 (autenticación)** dejó la app `apps/accounts`: el modelo de usuario propio (`AUTH_USER_MODEL = "accounts.User"`), el inicio de sesión con usuario o correo, el bloqueo temporal tras intentos fallidos, el cambio obligatorio de contraseña en el primer ingreso, la recuperación por correo simulado, Argon2 y la sesión obligatoria en todo el sistema (`LoginRequiredMiddleware`). Todavía no hay modelos de negocio.
 
 La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1 a D16), está en `docs/specs-tentativas.md`. Léela antes de escribir una spec.
 
@@ -54,8 +54,9 @@ Lo que sigue pendiente a propósito, con la spec que lo resuelve:
 | Constitución | Estado actual | Dónde se resuelve |
 |---|---|---|
 | i18n con `gettext` | Los textos usan `gettext` y `{% translate %}` con msgid en español. Todavía no hay `LocaleMiddleware` ni catálogos `.po` (decisión de la SPEC 02) | Cuando haya un segundo idioma |
-| Recuperación de contraseña por correo (§6.1) | Correo por consola solo en `dev`; `prod` usa el SMTP por defecto de Django, sin configurar | Spec de autenticación |
-| HSTS, CSP, respaldos y mínimo privilegio en BD (§14) | `prod` tiene un mínimo seguro; `check --deploy` solo avisa `security.W004` | Spec de endurecimiento |
+| Recuperación de contraseña por correo (§6.1) | Funciona, pero el correo es simulado en todos los entornos: `EMAIL_BACKEND` elige `console` o `file`, sin SMTP. Por eso `check --deploy` con `prod` da el error `mail.E001` (se dejó visible a propósito) | Spec que agregue el envío real de correos |
+| Cierre de sesión por inactividad (§6.1) | No existe. La sesión se cierra al cerrar el navegador y dura como máximo 12 horas, fijo en los settings (SPEC 03) | Spec futura, pendiente de ubicar en `docs/specs-tentativas.md` |
+| HSTS, CSP, respaldos y mínimo privilegio en BD (§14) | `prod` tiene un mínimo seguro; `check --deploy` avisa `security.W004` (además del `mail.E001` del correo simulado) | Spec de endurecimiento |
 
 ## Flujo de trabajo obligatorio: desarrollo guiado por especificaciones (SDD)
 
@@ -176,6 +177,16 @@ register(
 - **Permisos:** el menú filtra con `user.has_perms(permissions)`. Ocultar una entrada no protege la vista: la vista y el servicio siguen verificando permisos.
 - **Opciones:** `children` crea un submenú de un solo nivel (con `url_name=None` en el padre), y `debug_only=True` muestra la entrada solo con DEBUG.
 - **Pruebas:** usan un `MenuRegistry` aislado, como `tests/core/test_navigation.py`. No registran entradas en el registro global.
+
+## Autenticación (SPEC 03)
+
+- **Toda vista exige sesión** (`LoginRequiredMiddleware`). Una vista pública se marca con `@login_not_required`; hoy solo lo son el login, la recuperación de contraseña y `/health/`.
+- **Usuario:** usa `get_user_model()` o `settings.AUTH_USER_MODEL` (`accounts.User`), nunca `django.contrib.auth.models.User`. El nombre de usuario no admite `@` ni `+`, y el correo es opcional pero único sin distinguir mayúsculas.
+- **Políticas:** los intentos antes del bloqueo, la duración del bloqueo, la longitud mínima de la contraseña y la vigencia del enlace de recuperación solo se leen con `apps/accounts/policy.py`. La SPEC 06 cambia ese módulo para leerlos de `parametros`.
+- **Servicios:** el bloqueo y el desbloqueo están en `apps/accounts/services.py` (`authenticate_with_lockout`, `clear_failed_attempts`, `mark_password_changed`). La SPEC 04 los reutiliza para desbloquear, y la SPEC 05 para auditar los ingresos.
+- **Cambio obligatorio:** mientras `must_change_password` sea verdadero, `ForcePasswordChangeMiddleware` lleva al usuario a `/contrasena/cambiar/` desde cualquier ruta.
+- **Admin de Django:** solo para superusuarios y con el login propio. Sirve para crear usuarios hasta la SPEC 04.
+- **Pruebas:** usan el hasher MD5 (fixture `autouse` en `tests/conftest.py`). Para pedir páginas usa los fixtures `auth_client`, `user` y `make_user`; `make_user` crea el usuario con `must_change_password=False` salvo que se indique otra cosa.
 
 ## Convenciones de código
 
