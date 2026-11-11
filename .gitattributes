@@ -1,0 +1,21 @@
+# Fines de línea LF en el repositorio y en la copia de trabajo, en cualquier sistema
+# operativo. Evita diferencias espurias con Black/pre-commit y scripts rotos en Docker.
+# Agregado en la SPEC 01 (paso 13).
+* text=auto eol=lf
+
+# Scripts propios de Windows: CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios: sin conversión ni diff de texto.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary

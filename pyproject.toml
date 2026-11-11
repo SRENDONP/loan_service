@@ -1,8 +1,50 @@
 [project]
 name = "loan-service"
 version = "0.1.0"
-description = "Add your description here"
+description = "Sistema web para gestionar préstamos gota a gota (microcrédito con cuotas frecuentes, Colombia)."
 requires-python = ">=3.14"
 dependencies = [
     "django>=6.1.3",
+    "django-environ>=0.14.0",
+    "psycopg[binary]>=3.3.8",
 ]
+
+[dependency-groups]
+dev = [
+    "black>=26.10.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "pytest-django>=4.14.0",
+    "ruff>=0.17.4",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "--strict-markers"
+
+[tool.coverage.run]
+source = ["apps", "config"]
+omit = ["*/migrations/*"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+extend-exclude = ["references", "**/migrations/**"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DJ"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config", "tests"]
+
+[tool.black]
+line-length = 88
+target-version = ["py314"]
+extend-exclude = "^/references/"

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). Por ahora el repositorio es **el esqueleto recién creado con `django-admin startproject`**: solo existe el paquete de configuración `loan_service/` y una carpeta `templates/` vacía. Todavía no hay apps, modelos ni pruebas. Ya es un repositorio git, todavía sin commits.
+Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. Todavía no hay modelos de negocio ni interfaz: la plantilla SB Admin 2 llega con la SPEC 02.
 
 La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1 a D16), está en `docs/specs-tentativas.md`. Léela antes de escribir una spec.
 
@@ -12,32 +12,51 @@ La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1
 
 ## Comandos
 
-Las dependencias se gestionan con **uv** (`pyproject.toml` + `uv.lock`, entorno virtual en `.venv/`). Requiere Python >= 3.14.
+Las dependencias se gestionan con **uv** (`pyproject.toml` + `uv.lock`, entorno virtual en `.venv/`). Requiere Python >= 3.14. La configuración local va en `.env` (copiado de `.env.example`, nunca versionado).
 
 ```bash
-uv sync                                  # instalar dependencias
-uv run python manage.py runserver        # servidor de desarrollo
-uv run python manage.py makemigrations   # crear migraciones
+# Docker: levanta web (Django, puerto 8000) y db (PostgreSQL 18)
+docker compose up                        # -d para segundo plano
+docker compose up -d db                  # solo la base de datos, para trabajar con uv
+docker compose ps                        # estado y healthchecks
+docker compose logs -f web
+docker compose down                      # -v borra también la base de datos
+
+# Django en local (contra el PostgreSQL del contenedor)
+uv sync
+uv run python manage.py runserver        # usa config.settings.dev
+uv run python manage.py makemigrations
 uv run python manage.py migrate
-uv run python manage.py startapp <nombre>
 uv run python manage.py check
+
+# Pruebas y calidad (los mismos pasos que el CI)
+uv run pytest                            # requiere el PostgreSQL de compose
+uv run pytest --cov
+uv run pytest tests/core/test_health.py::test_health_ok_when_database_responds
+uv run ruff check .
+uv run black .                           # black --check . para solo verificar
+uv run python manage.py makemigrations --check --dry-run
+uv run pre-commit run --all-files
 ```
 
-La constitución exige pytest + pytest-django, Black y Ruff, pero aún no están instalados ni configurados. Cuando se agreguen, los comandos previstos son `uv run pytest`, `uv run pytest ruta/al/test_archivo.py::test_nombre` para una sola prueba, `uv run ruff check .` y `uv run black .`.
+Notas:
+
+- Una app nueva se crea dentro de `apps/`: `mkdir apps/<nombre>` y `uv run python manage.py startapp <nombre> apps/<nombre>`. Después, en su `apps.py`, `name = "apps.<nombre>"`. Sus pruebas van en `tests/<nombre>/`, con `__init__.py`.
+- En esta máquina, el servicio de Windows `postgresql-x64-18` ocupa el puerto 5432. Por eso el `.env` local usa `POSTGRES_PORT=5433` y `DATABASE_URL=...localhost:5433/...`. Si `migrate` o pytest fallan por autenticación, revisa eso primero.
+- `wsgi.py` y `asgi.py` cargan `config.settings.prod` por defecto, y `prod` no arranca sin `SECRET_KEY`, `ALLOWED_HOSTS` y `DATABASE_URL`.
 
 ## Diferencias entre la constitución y el código actual
 
-La constitución pide cosas que el esqueleto todavía no tiene. No elijas un lado en silencio: señala el conflicto cuando sea relevante.
+La SPEC 01 resolvió las diferencias estructurales (stack, PostgreSQL, settings por entorno, secretos, `apps/` y `specs/`, Docker e idioma). La §4 se enmendó en la versión 1.3 de la constitución. No elijas un lado en silencio ante un conflicto nuevo: señálalo.
 
-| Constitución | Código actual |
-|---|---|
-| Python 3.12+, Django 5.x LTS | Python >= 3.14, Django 6.1.3 |
-| Solo PostgreSQL 16+ | SQLite (`db.sqlite3`) |
-| Paquete `config/` con settings separados (base/dev/prod) | un único `loan_service/settings.py` |
-| Secretos por variables de entorno (django-environ / python-decouple) | `SECRET_KEY` escrito en el código, `DEBUG=True` |
-| Apps dentro de `apps/`, specs dentro de `specs/` | no existe ninguna de las dos |
-| Docker / docker-compose | no hay |
-| Interfaz en es-CO, lista para i18n | `LANGUAGE_CODE='en-us'`, `TIME_ZONE='UTC'` |
+Lo que sigue pendiente a propósito, con la spec que lo resuelve:
+
+| Constitución | Estado actual | Dónde se resuelve |
+|---|---|---|
+| Interfaz con SB Admin 2 servida desde `static/` | `references/` existe, pero no hay `static/` ni `base.html` | SPEC 02 |
+| i18n con `gettext` | Base lista (`es-co`, `LOCALE_PATHS`), sin `LocaleMiddleware` ni catálogos | SPEC 02 en adelante |
+| Recuperación de contraseña por correo (§6.1) | Correo por consola solo en `dev`; `prod` usa el SMTP por defecto de Django, sin configurar | Spec de autenticación |
+| HSTS, CSP, respaldos y mínimo privilegio en BD (§14) | `prod` tiene un mínimo seguro; `check --deploy` solo avisa `security.W004` | Spec de endurecimiento |
 
 ## Flujo de trabajo obligatorio: desarrollo guiado por especificaciones (SDD)
 
