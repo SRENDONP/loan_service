@@ -1,0 +1,53 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - list [ref=f7e3]:
+      - link " Gestión de préstamos" [ref=f7e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f7e5]: 
+        - generic [ref=f7e7]: Gestión de préstamos
+      - separator [ref=f7e8]
+      - listitem [ref=f7e9]:
+        - link " Inicio" [ref=f7e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f7e11]: 
+          - text: Inicio
+      - separator [ref=f7e12]
+      - generic [ref=f7e13]: Administración
+      - listitem [ref=f7e14]:
+        - link " Usuarios" [ref=f7e15] [cursor=pointer]:
+          - /url: /usuarios/
+          - generic [ref=f7e16]: 
+          - text: Usuarios
+      - separator [ref=f7e17]
+      - generic [ref=f7e18]: Desarrollo
+      - listitem [ref=f7e19]:
+        - link " Componentes" [ref=f7e20] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f7e21]: 
+          - text: Componentes
+      - separator [ref=f7e22]
+      - button "Contraer o expandir el menú" [ref=f7e24] [cursor=pointer]: 
+    - generic [ref=f7e25]:
+      - generic [ref=f7e26]:
+        - navigation [ref=f7e27]:
+          - text: 
+          - list [ref=f7e28]:
+            - listitem [ref=f7e29]:
+              - button "Ada Restrepo" [ref=f7e30] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f7e32]: 
+              - text:  
+        - generic [ref=f7e33]:
+          - heading "Desactivar a demo_nuevo" [level=1] [ref=f7e34]
+          - generic [ref=f7e38]:
+            - paragraph [ref=f7e39]: "El usuario no podrá entrar al sistema y sus sesiones abiertas se cerrarán ahora. No se borra: puedes reactivarlo desde su ficha."
+            - generic [ref=f7e40]:
+              - generic [ref=f7e41]:
+                - generic [ref=f7e42]: "Motivo:"
+                - textbox "Motivo:" [ref=f7e43]
+                - generic [ref=f7e44]: Obligatorio. Hasta 500 caracteres. Queda en la ficha del usuario.
+              - button "Desactivar usuario" [ref=f7e45] [cursor=pointer]
+              - link "Cancelar" [ref=f7e46] [cursor=pointer]:
+                - /url: /usuarios/8/
+      - contentinfo [ref=f7e47]:
+        - generic [ref=f7e48]: Copyright © Gestión de préstamos 2026
+  - text: 

@@ -48,6 +48,13 @@ construyen con desarrollo guiado por especificaciones (SDD): ver [Flujo de traba
    superusuario creado así no tiene que cambiar la contraseña; cualquier otro usuario sí,
    en su primer ingreso.
 
+4. Crea el primer **Administrador** del negocio. El superusuario es una cuenta técnica:
+   no tiene rol y no se gestiona desde la aplicación. Con él, entra en
+   <http://localhost:8000/usuarios/>, pulsa "Nuevo usuario" y elige el rol
+   **Administrador**. El sistema muestra una contraseña temporal una sola vez. Entrégala
+   al administrador, que la cambia por una propia en su primer ingreso. Desde ese
+   momento, los usuarios se gestionan con esa cuenta, no con el superusuario.
+
 Esto levanta dos servicios:
 
 | Servicio | Qué es | Puerto en tu equipo |
@@ -57,8 +64,9 @@ Esto levanta dos servicios:
 
 ### Qué puedes ver hoy
 
-La interfaz usa el layout de SB Admin 2 (SPEC 02) y todo el sistema exige sesión (SPEC 03).
-Todavía no hay módulos de negocio. Puedes abrir:
+La interfaz usa el layout de SB Admin 2 (SPEC 02), todo el sistema exige sesión (SPEC 03) y
+cada usuario tiene uno de los cuatro roles (SPEC 04). Todavía no hay módulos de negocio.
+Puedes abrir:
 
 | URL | Qué muestra |
 |---|---|
@@ -67,7 +75,8 @@ Todavía no hay módulos de negocio. Puedes abrir:
 | <http://localhost:8000/contrasena/recuperar/> | La recuperación de contraseña por correo. El correo es simulado: mira [Correos simulados](#correos-simulados). |
 | <http://localhost:8000/componentes/> | El catálogo de componentes compartidos (mensajes, formulario, modal de confirmación, botones y tabla con DataTables), con datos de ejemplo. **Solo existe con `DEBUG=True`**; sin DEBUG responde 404 y no aparece en el menú. |
 | <http://localhost:8000/health/> | `{"status": "ok", "database": "ok"}`. Es público. Si la base de datos no responde, devuelve 503. |
-| <http://localhost:8000/admin/> | El admin de Django, en español. Solo entran superusuarios, y el ingreso pasa por el login propio. Por ahora es el único lugar para crear usuarios (la SPEC 04 trae la pantalla propia). |
+| <http://localhost:8000/usuarios/> | La gestión de usuarios, solo para el rol Administrador (y los superusuarios): listado, ficha, creación con contraseña temporal, edición del rol y de los datos, desactivación con motivo, reactivación, desbloqueo, restablecimiento de la contraseña y cierre de sesiones. Los otros roles no ven la entrada del menú y reciben 403. |
+| <http://localhost:8000/admin/> | El admin de Django, en español. Solo entran superusuarios, y el ingreso pasa por el login propio. Es una herramienta técnica: los usuarios se gestionan en `/usuarios/`, y un cambio a los grupos hecho aquí se revierte en el siguiente `migrate` (ADR-002). |
 
 ### Correos simulados
 
@@ -248,7 +257,7 @@ La entrada cuyo `url_name` coincide con la página actual se marca como activa.
 
 ```
 config/              Settings (base, dev, prod), urls, wsgi y asgi
-apps/                Apps de Django: core (layout, menú y /health/) y accounts (usuario y autenticación)
+apps/                Apps de Django: core (layout, menú y /health/) y accounts (usuarios, autenticación, roles y permisos)
 tests/               Pruebas con pytest, una carpeta por app
 templates/           Plantillas compartidas: base.html, includes/, forms/ y páginas de error
 static/              Recursos de SB Admin 2 copiados de references/, más app.css y app.js

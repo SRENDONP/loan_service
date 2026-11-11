@@ -163,3 +163,35 @@ def test_admin_user_list_shows_access_columns(client, superuser):
 
     assert "column-must_change_password" in html
     assert "column-locked_until" in html
+
+
+def test_admin_does_not_allow_deleting_users(client, superuser, make_user):
+    target = make_user("ana")
+    client.force_login(superuser)
+
+    delete = client.get(reverse("admin:accounts_user_delete", args=[target.pk]))
+    changelist = client.get(reverse("admin:accounts_user_changelist"))
+
+    assert delete.status_code == 403
+    assert "delete_selected" not in changelist.content.decode()
+    assert User.objects.filter(pk=target.pk).exists()
+
+
+def test_admin_change_page_shows_profile_and_deactivation_fields(
+    client, superuser, make_user
+):
+    target = make_user("ana")
+    client.force_login(superuser)
+
+    response = client.get(reverse("admin:accounts_user_change", args=[target.pk]))
+
+    content = response.content.decode()
+    for field in (
+        "phone",
+        "document_type",
+        "document_number",
+        "deactivated_at",
+        "deactivated_by",
+        "deactivation_reason",
+    ):
+        assert f'name="{field}' in content

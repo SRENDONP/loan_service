@@ -1,0 +1,38 @@
+- generic [active] [ref=f20e1]:
+  - generic [ref=f20e2]:
+    - list [ref=f20e3]:
+      - link "" [ref=f20e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f20e7]
+      - listitem [ref=f20e8]:
+        - link " Inicio" [ref=f20e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f20e10]: 
+          - generic [ref=f20e11]: Inicio
+      - separator [ref=f20e12]
+      - generic [ref=f20e13]: Desarrollo
+      - listitem [ref=f20e14]:
+        - link " Componentes" [ref=f20e15] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f20e16]: 
+          - generic [ref=f20e17]: Componentes
+      - text: 
+    - generic [ref=f20e18]:
+      - generic [ref=f20e19]:
+        - navigation [ref=f20e20]:
+          - button "Mostrar u ocultar el menú" [ref=f20e21] [cursor=pointer]:
+            - generic [ref=f20e22]: 
+          - list [ref=f20e23]:
+            - listitem [ref=f20e24]:
+              - button [ref=f20e25] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f20e26]: 
+              - text:  
+        - generic [ref=f20e27]:
+          - alert [ref=f20e28]:
+            - text: Cambiaste tu contraseña.
+            - button "Cerrar" [ref=f20e29] [cursor=pointer]: ×
+          - heading "Inicio" [level=1] [ref=f20e30]
+          - paragraph [ref=f20e31]: Te damos la bienvenida a Gestión de préstamos. Usa el menú lateral para ir a cada módulo.
+      - contentinfo [ref=f20e32]:
+        - generic [ref=f20e33]: Copyright © Gestión de préstamos 2026
+  - text: 

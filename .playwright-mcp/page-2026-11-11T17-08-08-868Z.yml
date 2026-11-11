@@ -1,0 +1,16 @@
+- generic [ref=f17e7]:
+  - generic [ref=f17e8]:
+    - generic [aria-hidden] [ref=f17e9]: 
+    - generic [ref=f17e10]: Gestión de préstamos
+  - heading "Inicia sesión" [level=1] [ref=f17e12]
+  - generic [ref=f17e13]:
+    - generic [ref=f17e14]:
+      - generic [ref=f17e15]: Usuario o correo
+      - textbox "Usuario o correo" [active] [ref=f17e16]
+    - generic [ref=f17e17]:
+      - generic [ref=f17e18]: Contraseña
+      - textbox "Contraseña" [ref=f17e19]
+    - button "Ingresar" [ref=f17e20] [cursor=pointer]
+  - separator [ref=f17e21]
+  - link "¿Olvidaste tu contraseña?" [ref=f17e23] [cursor=pointer]:
+    - /url: /contrasena/recuperar/

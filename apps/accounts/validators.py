@@ -29,6 +29,32 @@ class UsernameValidator(RegexValidator):
     flags = 0
 
 
+colombian_mobile_validator = RegexValidator(
+    regex=r"^3\d{9}\Z",
+    message=_(
+        "Escribe un celular colombiano de 10 dígitos que empiece por 3, "
+        "sin espacios ni guiones."
+    ),
+    code="invalid_mobile",
+)
+"""Celular colombiano: 10 dígitos que empiezan por 3 (SPEC 04, §3.2)."""
+
+document_number_validator = RegexValidator(
+    regex=r"^[A-Za-z0-9]{3,20}\Z",
+    message=_(
+        "Escribe un número de documento de 3 a 20 letras o dígitos, "
+        "sin espacios ni puntos."
+    ),
+    code="invalid_document_number",
+)
+"""
+Número de documento: de 3 a 20 letras o dígitos (SPEC 04, §3.2).
+
+Acepta minúsculas porque el modelo lo pasa a mayúsculas en `clean()`, que corre
+después de los validadores de campo.
+"""
+
+
 class PolicyMinimumLengthValidator:
     """
     Longitud mínima de la contraseña, leída de `policy.py` en cada uso.

@@ -1,4 +1,4 @@
-"""Registro del usuario en el admin de Django (SPEC 03)."""
+"""Registro del usuario en el admin de Django (SPEC 03 y SPEC 04)."""
 
 from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
@@ -27,7 +27,8 @@ class UserAdmin(auth_admin.UserAdmin):
     Usuarios en el admin, con los campos del bloqueo y del cambio obligatorio.
 
     Un usuario creado aquí debe cambiar la contraseña en su primer ingreso
-    (`must_change_password` vale True por defecto).
+    (`must_change_password` vale True por defecto). Los usuarios no se borran,
+    solo se desactivan (§6.3), así que el admin no ofrece el borrado.
     """
 
     form = UserChangeForm
@@ -35,6 +36,20 @@ class UserAdmin(auth_admin.UserAdmin):
 
     fieldsets = (
         *auth_admin.UserAdmin.fieldsets,
+        (
+            _("Contacto e identificación"),
+            {"fields": ("phone", "document_type", "document_number")},
+        ),
+        (
+            _("Desactivación"),
+            {
+                "fields": (
+                    "deactivated_at",
+                    "deactivated_by",
+                    "deactivation_reason",
+                ),
+            },
+        ),
         (
             _("Acceso"),
             {
@@ -76,3 +91,6 @@ class UserAdmin(auth_admin.UserAdmin):
         "must_change_password",
         "groups",
     )
+
+    def has_delete_permission(self, request, obj=None) -> bool:
+        return False

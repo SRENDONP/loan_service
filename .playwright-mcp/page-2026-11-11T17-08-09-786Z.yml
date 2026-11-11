@@ -1,0 +1,56 @@
+- generic [ref=f18e1]:
+  - generic [ref=f18e2]:
+    - list [ref=f18e3]:
+      - link "" [ref=f18e4] [cursor=pointer]:
+        - /url: /
+      - separator [ref=f18e7]
+      - listitem [ref=f18e8]:
+        - link " Inicio" [ref=f18e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f18e10]: 
+          - generic [ref=f18e11]: Inicio
+      - separator [ref=f18e12]
+      - generic [ref=f18e13]: Desarrollo
+      - listitem [ref=f18e14]:
+        - link " Componentes" [ref=f18e15] [cursor=pointer]:
+          - /url: /componentes/
+          - generic [ref=f18e16]: 
+          - generic [ref=f18e17]: Componentes
+      - text: 
+    - generic [ref=f18e18]:
+      - generic [ref=f18e19]:
+        - navigation [ref=f18e20]:
+          - button "Mostrar u ocultar el menú" [ref=f18e21] [cursor=pointer]:
+            - generic [ref=f18e22]: 
+          - list [ref=f18e23]:
+            - listitem [ref=f18e24]:
+              - button [ref=f18e25] [cursor=pointer]:
+                - generic [aria-hidden] [ref=f18e26]: 
+              - text:  
+        - generic [ref=f18e27]:
+          - heading "Cambiar contraseña" [level=1] [ref=f18e28]
+          - generic [ref=f18e30]:
+            - alert [ref=f18e31]: Antes de continuar, cambia la contraseña que te asignaron por una que solo tú conozcas.
+            - generic [ref=f18e32]:
+              - heading "Nueva contraseña" [level=6] [ref=f18e34]
+              - generic [ref=f18e36]:
+                - generic [ref=f18e37]:
+                  - generic [ref=f18e38]: "Contraseña antigua:"
+                  - textbox "Contraseña antigua:" [active] [ref=f18e39]
+                - generic [ref=f18e40]:
+                  - generic [ref=f18e41]: "Contraseña nueva:"
+                  - textbox "Contraseña nueva:" [ref=f18e42]
+                  - list [ref=f18e44]:
+                    - listitem [ref=f18e45]: Su contraseña no puede asemejarse tanto a su otra información personal.
+                    - listitem [ref=f18e46]: Tu contraseña debe tener al menos 8 caracteres.
+                    - listitem [ref=f18e47]: Su contraseña no puede ser una clave utilizada comúnmente.
+                    - listitem [ref=f18e48]: Su contraseña no puede ser completamente numérica.
+                    - listitem [ref=f18e49]: Tu contraseña debe tener al menos una letra y un número.
+                - generic [ref=f18e50]:
+                  - generic [ref=f18e51]: "Contraseña nueva (confirmación):"
+                  - textbox "Contraseña nueva (confirmación):" [ref=f18e52]
+                  - generic [ref=f18e53]: Para verificar, ingrese la misma contraseña anterior.
+                - button "Cambiar contraseña" [ref=f18e54] [cursor=pointer]
+      - contentinfo [ref=f18e55]:
+        - generic [ref=f18e56]: Copyright © Gestión de préstamos 2026
+  - text: 

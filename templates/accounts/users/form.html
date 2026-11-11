@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Creación y edición de usuarios (SPEC 04, §3.7). Modelo: register.html,
+  dentro del layout como el cambio de contraseña. Los campos los dibuja el
+  renderizador de formularios del proyecto.
+{% endcomment %}
+
+{% block title %}{% if creating %}{% translate "Nuevo usuario" %}{% else %}{% translate "Editar usuario" %}{% endif %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% if creating %}
+      {% translate "Nuevo usuario" %}
+    {% else %}
+      {% blocktranslate with username=target.username %}Editar a {{ username }}{% endblocktranslate %}
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Datos del usuario" %}</h2>
+        </div>
+        <div class="card-body">
+          {% if creating %}
+            <p class="small text-gray-700">{% translate "El sistema genera una contraseña temporal y te la muestra una sola vez al crear el usuario. En su primer ingreso, el usuario la cambia por una propia." %}</p>
+          {% endif %}
+          <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">
+              {% if creating %}{% translate "Crear usuario" %}{% else %}{% translate "Guardar cambios" %}{% endif %}
+            </button>
+            {% if creating %}
+              <a href="{% url 'accounts:user_list' %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+            {% else %}
+              <a href="{% url 'accounts:user_detail' target.pk %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
