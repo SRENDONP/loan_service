@@ -1,10 +1,8 @@
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_not_required
-from django.urls import path, reverse_lazy
+from django.urls import path
 
 from . import views
-from .forms import PasswordResetForm
-from .tokens import password_reset_token_generator
 
 app_name = "accounts"
 
@@ -55,16 +53,7 @@ urlpatterns = [
     ),
     path(
         "contrasena/recuperar/",
-        login_not_required(
-            auth_views.PasswordResetView.as_view(
-                form_class=PasswordResetForm,
-                template_name="accounts/password_reset.html",
-                email_template_name="accounts/email/password_reset_email.txt",
-                subject_template_name="accounts/email/password_reset_subject.txt",
-                token_generator=password_reset_token_generator,
-                success_url=reverse_lazy("accounts:password_reset_done"),
-            )
-        ),
+        login_not_required(views.PasswordResetView.as_view()),
         name="password_reset",
     ),
     path(

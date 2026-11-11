@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Estado del proyecto
 
-Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. La **SPEC 03 (autenticación)** dejó la app `apps/accounts`: el modelo de usuario propio (`AUTH_USER_MODEL = "accounts.User"`), el inicio de sesión con usuario o correo, el bloqueo temporal tras intentos fallidos, el cambio obligatorio de contraseña en el primer ingreso, la recuperación por correo simulado, Argon2 y la sesión obligatoria en todo el sistema (`LoginRequiredMiddleware`). La **SPEC 04 (usuarios, roles y permisos)** dejó los cuatro roles como grupos de Django, sincronizados desde el código (`apps/accounts/roles.py`, ADR-002), las utilidades de permisos, los servicios de gestión de usuarios y el módulo `/usuarios/` para el Administrador. Todavía no hay modelos de negocio.
+Sistema web para gestionar préstamos "gota a gota" (microcrédito con cuotas frecuentes, Colombia). La **SPEC 01 (fundación del proyecto)** dejó la base técnica: settings por entorno en `config/settings/` (`base`, `dev`, `prod`) con django-environ, PostgreSQL 18 en Docker, la app `apps/core` con `GET /health/`, pruebas en `tests/`, Ruff, Black, pre-commit y CI en GitHub Actions. La **SPEC 02 (layout base y menú modular)** dejó la interfaz común: `templates/base.html` derivado de SB Admin 2, los recursos de la plantilla en `static/`, el menú lateral que se arma con el `menu.py` de cada app, las páginas de error, los componentes compartidos (mensajes, formularios, tablas con DataTables y modal de confirmación) y el catálogo `/componentes/`, que solo existe con DEBUG. La **SPEC 03 (autenticación)** dejó la app `apps/accounts`: el modelo de usuario propio (`AUTH_USER_MODEL = "accounts.User"`), el inicio de sesión con usuario o correo, el bloqueo temporal tras intentos fallidos, el cambio obligatorio de contraseña en el primer ingreso, la recuperación por correo simulado, Argon2 y la sesión obligatoria en todo el sistema (`LoginRequiredMiddleware`). La **SPEC 04 (usuarios, roles y permisos)** dejó los cuatro roles como grupos de Django, sincronizados desde el código (`apps/accounts/roles.py`, ADR-002), las utilidades de permisos, los servicios de gestión de usuarios y el módulo `/usuarios/` para el Administrador. La **SPEC 05 (auditoría base)** dejó la app `apps/auditoria`: el registro inmutable `AuditEvent` (protegido en la aplicación y con un trigger de PostgreSQL), el catálogo de acciones con su categoría, el servicio `record`, el contexto de la petición, la auditoría de los accesos y de la gestión de usuarios, y un admin de solo lectura. Todavía no hay modelos de negocio.
 
 La hoja de ruta tentativa de specs, con las decisiones de negocio ya tomadas (D1 a D16), está en `docs/specs-tentativas.md`. Léela antes de escribir una spec.
 
@@ -184,7 +184,7 @@ register(
 - **Toda vista exige sesión** (`LoginRequiredMiddleware`). Una vista pública se marca con `@login_not_required`; hoy solo lo son el login, la recuperación de contraseña y `/health/`.
 - **Usuario:** usa `get_user_model()` o `settings.AUTH_USER_MODEL` (`accounts.User`), nunca `django.contrib.auth.models.User`. El nombre de usuario no admite `@` ni `+`, y el correo es opcional pero único sin distinguir mayúsculas.
 - **Políticas:** los intentos antes del bloqueo, la duración del bloqueo, la longitud mínima de la contraseña y la vigencia del enlace de recuperación solo se leen con `apps/accounts/policy.py`. La SPEC 06 cambia ese módulo para leerlos de `parametros`.
-- **Servicios:** el bloqueo y el desbloqueo están en `apps/accounts/services.py` (`authenticate_with_lockout`, `clear_failed_attempts`, `mark_password_changed`). La SPEC 04 los reutiliza para desbloquear, y la SPEC 05 para auditar los ingresos.
+- **Servicios:** el bloqueo y el desbloqueo están en `apps/accounts/services.py` (`authenticate_with_lockout`, `clear_failed_attempts`, `mark_password_changed`). La SPEC 04 los reutiliza para desbloquear. La SPEC 05 registra ahí el bloqueo y el intento durante un bloqueo, porque Django no emite señales para esos casos.
 - **Cambio obligatorio:** mientras `must_change_password` sea verdadero, `ForcePasswordChangeMiddleware` lleva al usuario a `/contrasena/cambiar/` desde cualquier ruta.
 - **Admin de Django:** solo para superusuarios y con el login propio. Es una herramienta técnica: los usuarios se gestionan en `/usuarios/` (SPEC 04), y el admin no permite borrarlos.
 - **Pruebas:** usan el hasher MD5 (fixture `autouse` en `tests/conftest.py`). Para pedir páginas usa los fixtures `auth_client`, `user` y `make_user`; `make_user` crea el usuario con `must_change_password=False` salvo que se indique otra cosa.
@@ -196,10 +196,63 @@ register(
 - **Cuando una spec cree un módulo:** agrega los permisos de sus modelos a `ROLE_PERMISSIONS` en la misma rama, con una prueba de la matriz. Un permiso que no existe hace fallar `migrate` con `ImproperlyConfigured`.
 - **Quién es cobrador:** `User.objects.collectors()`: activo, no superusuario y con el rol `Cajero/Cobrador`. No hay relación entre supervisor y cobradores: todo supervisor ve a todos. También existen `User.objects.with_role(role)` y `User.objects.active_administrators()`.
 - **Verificar permisos** (`apps/accounts/permissions.py`): en servicios, `require_perms(user, *perms)`; en vistas de clase, `PermissionRequiredMixin` (pon `permission_required`); en vistas de función, `permission_required(*perms)`. Las tres responden 403, nunca redirigen al login.
-- **Servicios de gestión** (`apps/accounts/services.py`): `create_user`, `update_user`, `deactivate_user`, `reactivate_user`, `unlock_user`, `reset_user_password` y `logout_user_sessions`. Reciben siempre al `actor` primero, verifican su permiso y lanzan `UserRuleError` (subclase de `ValidationError`) cuando una regla lo impide: nada sobre uno mismo ni sobre un superusuario, siempre queda un Administrador activo que no es superusuario y sobre un inactivo solo se edita o se reactiva. La SPEC 05 los audita desde ahí.
+- **Servicios de gestión** (`apps/accounts/services.py`): `create_user`, `update_user`, `deactivate_user`, `reactivate_user`, `unlock_user`, `reset_user_password` y `logout_user_sessions`. Reciben siempre al `actor` primero, verifican su permiso y lanzan `UserRuleError` (subclase de `ValidationError`) cuando una regla lo impide: nada sobre uno mismo ni sobre un superusuario, siempre queda un Administrador activo que no es superusuario y sobre un inactivo solo se edita o se reactiva. Cada uno deja su registro de auditoría (SPEC 05).
 - **Contraseñas temporales:** las genera `generate_temporary_password()` y se muestran una sola vez con `temporary_password_response` (renderizada desde el POST, con `no-store`). Nunca las pongas en `messages`, en la sesión ni en logs.
 - **Usuarios nunca se borran:** el modelo no tiene permiso `delete_user` y el admin no ofrece el borrado. Se desactivan con motivo (`deactivated_at`, `deactivated_by`, `deactivation_reason`).
 - **Pruebas:** `make_user(role=Role.X)` crea el usuario con ese rol. Los grupos ya existen en la base de pruebas porque `migrate` corre `sync_roles`.
+
+## Auditoría (SPEC 05)
+
+Toda acción sobre datos financieros, personales o de seguridad deja un registro inmutable (§14). **Cada spec que cree un módulo audita sus acciones desde su primer día**, e incluye criterios de aceptación de esa auditoría.
+
+**Cómo auditar una acción nueva:**
+
+1. Agrégala a `AuditAction` en `apps/auditoria/actions.py` con un valor `"modulo.accion"` y una etiqueta con `gettext_lazy`.
+2. Asígnale una categoría en `ACTION_CATEGORIES`: `ACCESS`, `SECURITY`, `PERSONAL_DATA` o `FINANCIAL`. La categoría la fija el catálogo, no quien llama.
+3. En el servicio, toma un `snapshot` antes de la operación y otro después, y llama a `record` **dentro de la misma `transaction.atomic()`**:
+
+```python
+from apps.auditoria.actions import AuditAction
+from apps.auditoria.services import diff, record, snapshot
+
+FIELDS = ("amount", "status")
+
+with transaction.atomic():
+    before = snapshot(credit, FIELDS)
+    # ... la operación ...
+    record(
+        AuditAction.CREDIT_DISBURSED,
+        actor=actor,
+        target=credit,
+        changes=diff(before, snapshot(credit, FIELDS)),
+        extra={"reason": reason},
+    )
+```
+
+Reglas:
+
+- **El valor de una acción no cambia nunca** después de usarse; la etiqueta sí. Una prueba exige que toda acción tenga categoría.
+- **El actor es siempre el `actor` del servicio.** `record` no lo saca del `request` ni del contexto.
+- **Si `record` falla, la operación se revierte.** No atrapes sus errores: una acción sin rastro es justo lo que la §14 prohíbe.
+- **Una edición sin cambios no se registra:** llama a `record` solo si `diff` no está vacío. Una acción explícita, como desbloquear o cerrar sesiones, sí se registra aunque no cambie campos.
+- **`changes`** guarda solo lo que cambió, como `{"campo": [antes, después]}`. **`extra`** guarda el contexto: el motivo, cuántas sesiones se cerraron.
+- **Campos secretos:** los de `SENSITIVE_FIELDS` (`apps/auditoria/services.py`) quedan como `"[oculto]"`. Si tu modelo trae otro campo secreto, agrégalo ahí. Nunca pongas en `extra` una contraseña, un token ni un hash.
+- **Usuarios:** `user_audit_snapshot(user)` en `apps/accounts/services.py` toma los campos auditables más el `role`.
+- **Señales:** solo los ingresos, los fallos de ingreso y los cierres de sesión se auditan con las señales de autenticación de Django (`apps/auditoria/receivers.py`, ADR-004). Todo lo demás llama a `record` desde el servicio.
+
+**Contexto de la petición:**
+
+- `AuditContextMiddleware` fija en un `ContextVar` la IP, el user agent, el método, la ruta sin cadena de consulta, un `request_id` y el origen. El origen es `web`, o `admin` bajo la ruta del admin. `record` lo toma solo, así que los servicios no reciben el `request`.
+- Un comando de gestión que audite envuelve su trabajo en `with audit_context(source=AuditSource.COMMAND):`. Sin petición ni `audit_context`, el origen es `system` y no hay IP.
+- **La IP** sale de `REMOTE_ADDR`. `X-Forwarded-For` solo se lee si `AUDIT_TRUSTED_PROXIES` es mayor que 0 (variable de entorno, por defecto `0`; detrás de un nginx propio, `1`).
+
+**Inmutabilidad:**
+
+- `AuditEvent` solo se crea. `save()` sobre uno existente, `delete()`, `update()` y `bulk_update()` lanzan `ImmutableAuditEventError`, y el trigger `auditoria_auditevent_immutable` rechaza `UPDATE` y `DELETE` por SQL.
+- `TRUNCATE` no está bloqueado, porque `flush` lo usa en las pruebas transaccionales. Ninguna prueba borra registros de auditoría con `DELETE`.
+- **Consulta:** por ahora, solo en el admin de Django (`/admin/auditoria/auditevent/`), de solo lectura y para superusuarios. Ningún rol tiene `auditoria.view_auditevent`; lo asigna la SPEC 25.
+
+**Pruebas:** usa `AuditEvent.objects.filter(action=...)` para verificar el registro. `force_login` también emite `user_logged_in` y crea un `auth.login_succeeded`, así que no supongas que el registro que buscas es el único.
 
 ## Convenciones de código
 

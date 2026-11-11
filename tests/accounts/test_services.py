@@ -162,7 +162,10 @@ def test_inactive_user_failure_is_counted_and_rejected(make_user, password):
     assert user.failed_login_attempts == 1
 
 
-def test_unknown_user_failure_writes_nothing():
+def test_unknown_user_failure_writes_nothing_but_the_audit():
+    from apps.auditoria.actions import AuditAction
+    from apps.auditoria.models import AuditEvent
+
     with CaptureQueriesContext(connection) as queries:
         fail("nadie", 1)
         fail("nadie@example.com", 1)
@@ -171,8 +174,11 @@ def test_unknown_user_failure_writes_nothing():
         query["sql"]
         for query in queries.captured_queries
         if query["sql"].lstrip().upper().startswith(("INSERT", "UPDATE", "DELETE"))
+        and '"auditoria_auditevent"' not in query["sql"]
     ]
     assert writes == []
+    # El fallo sí queda en la auditoría (SPEC 05, §3.7).
+    assert AuditEvent.objects.filter(action=AuditAction.LOGIN_FAILED).count() == 2
 
 
 @override_settings(ACCOUNTS_MAX_FAILED_ATTEMPTS=2, ACCOUNTS_LOCKOUT_MINUTES=30)

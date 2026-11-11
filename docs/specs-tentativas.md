@@ -164,6 +164,17 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - Auditoría de inicios de sesión y de la gestión de usuarios.
   - Una categoría en cada registro (acceso, operación financiera o datos personales), para aplicar retenciones distintas en la 024.
 - **Fuera de alcance:** la pantalla de consulta, que queda en la 024.
+- **Implementada como SPEC 05 (`specs/05-auditoria-base.md`).** Decisiones que afectan a las specs siguientes:
+  - **Cada spec que cree un módulo audita sus acciones:**
+    - Agrega las acciones a `AuditAction` y a `ACTION_CATEGORIES` (`apps/auditoria/actions.py`).
+    - Llama a `record(...)` dentro de la transacción del servicio, con `changes=diff(antes, después)` tomado con `snapshot`.
+    - Incluye criterios de aceptación de su auditoría.
+  - **Cuatro categorías, no tres:** acceso, seguridad (gestión de usuarios), datos personales y operación financiera. La categoría la fija el catálogo, no quien llama.
+  - **Señales:** los ingresos, los fallos de ingreso y los cierres de sesión se auditan con las señales de autenticación de Django (ADR-004). Nada más usa señales.
+  - **Inmutabilidad:** la aplicación rechaza la edición y el borrado, y un trigger de PostgreSQL rechaza `UPDATE` y `DELETE`. `TRUNCATE` sigue abierto (ver la 025).
+  - **Consulta provisional:** mientras llega la 024, los registros solo se consultan en el admin de Django, de solo lectura y solo para superusuarios. Ningún rol tiene `auditoria.view_auditevent`.
+  - **IP del cliente:** sale de `REMOTE_ADDR`. `X-Forwarded-For` solo se lee con `AUDIT_TRUSTED_PROXIES` mayor que 0; detrás de un nginx propio, `1`.
+  - **Campos secretos:** nunca guardan su valor. Quedan como `"[oculto]"` según `SENSITIVE_FIELDS` (`apps/auditoria/services.py`), y cada spec la amplía si trae otro campo secreto.
 
 ### Bloque C: Configuración
 
@@ -335,11 +346,15 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 - **Incluye:**
   - Pantalla solo para administradores, con filtros por usuario, fecha y entidad.
   - **Depuración automática a 1 año** (D11), según la categoría del registro (P5).
+- **Nota (SPEC 05):**
+  - La depuración tiene que pasar el trigger `auditoria_auditevent_immutable` por una vía controlada (ADR-004).
+  - Esta spec asigna `auditoria.view_auditevent` en `ROLE_PERMISSIONS`.
+  - La categoría `security` (gestión de usuarios) necesita su propia retención.
 
 #### 025 · Endurecimiento de seguridad y producción
 - **Incluye:**
   - HTTPS y HSTS, CSP y X-Frame-Options.
-  - Usuario de base de datos con mínimos privilegios.
+  - Usuario de base de datos con mínimos privilegios. Entre otros, sin permiso de `TRUNCATE` sobre `auditoria_auditevent` (SPEC 05, ADR-004).
   - Respaldos diarios con prueba de restauración.
   - Pruebas de inyección.
   - Revisión de seguridad y política de datos personales.

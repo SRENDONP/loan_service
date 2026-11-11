@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     # Apps del proyecto
     "apps.core",
     "apps.accounts",
+    # Registro de auditoría inmutable (SPEC 05).
+    "apps.auditoria",
 ]
 
 # Modelo de usuario propio (SPEC 03). Cambiarlo con datos reales es muy costoso.
@@ -61,6 +63,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # IP, navegador, ruta e id de cada petición para la auditoría (SPEC 05).
+    "apps.auditoria.middleware.AuditContextMiddleware",
     # Toda vista exige sesión salvo las marcadas con @login_not_required (SPEC 03).
     "django.contrib.auth.middleware.LoginRequiredMiddleware",
     # Quien debe cambiar la contraseña no pasa de esa pantalla (SPEC 03).
@@ -145,6 +149,15 @@ ACCOUNTS_MAX_FAILED_ATTEMPTS = 5
 ACCOUNTS_LOCKOUT_MINUTES = 15
 ACCOUNTS_PASSWORD_MIN_LENGTH = 8
 PASSWORD_RESET_TIMEOUT = 60 * 60
+
+
+# Auditoría (SPEC 05, §3.5). Número de proxies de confianza delante de la
+# aplicación. Con 0 la IP es REMOTE_ADDR y se ignora X-Forwarded-For, que el
+# cliente puede falsificar. Detrás de un nginx propio, 1.
+
+AUDIT_TRUSTED_PROXIES = env.int("AUDIT_TRUSTED_PROXIES", default=0)
+if AUDIT_TRUSTED_PROXIES < 0:
+    raise ImproperlyConfigured("AUDIT_TRUSTED_PROXIES no puede ser negativo.")
 
 
 # Internacionalización: español de Colombia, preparado para más idiomas.
