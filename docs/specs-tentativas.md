@@ -3,8 +3,10 @@
 > **Documento de trabajo, no oficial.** Es la base para definir las specs definitivas, que se
 > escriben con `/spec` en `specs/NN-slug.md`. La numeración de tres dígitos de esta hoja pasa a
 > dos dígitos y empieza en `01`: la 000 pasa a ser la `01`, la 001 pasa a ser la `02`, y así
-> con las demás. La numeración, el alcance y el orden pueden cambiar. La constitución
-> prevalece sobre este documento.
+> hasta la 004 (`05`). **La 005 se dividió en dos** (SPEC 06, parámetros globales, y SPEC 07,
+> catálogos y festivos), así que desde la 006 la spec definitiva lleva dos números más: la 006
+> pasa a ser la `08`, la 007 la `09`, y así hasta la 026 (`28`). La numeración, el alcance y el
+> orden pueden cambiar. La constitución prevalece sobre este documento.
 
 Versión 3 · 2026-11-06 · Incorpora la segunda ronda de respuestas (ver sección 1).
 
@@ -71,7 +73,8 @@ Las preguntas P1 a P4 y P6 quedaron resueltas con D12 a D16.
 | 002 | Autenticación | Núcleo | `accounts` | 001 |
 | 003 | Usuarios, roles y permisos | Núcleo | `accounts` | 002 |
 | 004 | Auditoría base (registro) | Núcleo | `auditoria` | 003 |
-| 005 | Parámetros globales y catálogos | Configuración | `parametros` | 004 |
+| 005 | Parámetros globales (SPEC 06) | Configuración | `parametros` | 004 |
+| 005b | Catálogos y festivos (SPEC 07) | Configuración | `parametros` | 005 |
 | 006 | Productos de crédito y tasas | Configuración | `parametros` | 005 |
 | 007 | Motor I: métodos de interés plano y redondeo | Motor | `amortizacion` | 000 |
 | 008 | Motor II: calendario de vencimientos | Motor | `amortizacion` | 007 |
@@ -138,7 +141,7 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 - **Nota:** el número de intentos y la política de contraseñas se leen de un servicio de parámetros con valores por defecto (5 intentos, 15 minutos de bloqueo). La spec 005 los vuelve editables.
 - **Implementada como SPEC 03 (`specs/03-autenticacion.md`).** El correo de recuperación es simulado (consola o archivo), sin SMTP en ningún entorno.
 - **Salió de esta spec y queda pendiente de ubicar:**
-  - **Cierre de sesión por inactividad (§6.1).** Lo decidió la persona al escribir la SPEC 03. Mientras tanto, la sesión se cierra al cerrar el navegador y dura como máximo 12 horas, fijo en los settings. La spec que lo implemente también hace parametrizable la duración de la sesión.
+  - **Cierre de sesión por inactividad (§6.1).** Quedó ubicado e implementado en la SPEC 06 (parámetros globales), junto con la duración máxima de la sesión como parámetro.
   - **Trato uniforme en los textos (tú o usted).** Los textos propios usan "tú", pero varios textos de Django que se ven en las pantallas de contraseña usan "usted" (SPEC 03, §4.1). Resolverlo exige sobrescribir textos de Django.
 
 #### 003 · Usuarios, roles y permisos
@@ -190,6 +193,17 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - **Festivos de Colombia**, con carga inicial y mantenimiento.
   - Tipos de relación de terceros: codeudor, referencia personal y otros.
 - **Diseño:** un registro único de configuración, no constantes en el código (D1).
+- **Se dividió en dos specs:**
+  - **SPEC 06 (`specs/06-parametros-globales.md`), implementada:** los parámetros globales.
+  - **SPEC 07, pendiente:** los catálogos (tipos de documento, ocupaciones, destinos de crédito, motivos de anulación y de rechazo, tipos de relación de terceros) y los festivos de Colombia con su carga inicial. Amplía `is_business_day` con los festivos sin cambiar su firma.
+- **Decisiones de la SPEC 06 que afectan a las specs siguientes:**
+  - Los parámetros globales solo se leen con `apps/parametros/services.py` (`get_settings`, `get_rounding_rule`, `is_business_day`). Un parámetro global nuevo es un campo tipado de `GlobalSettings`, nunca una constante ni un setting.
+  - El redondeo por defecto es un múltiplo (1, 10, 50, 100, 500 o 1.000) y un modo (al más cercano, hacia arriba o hacia abajo), por defecto múltiplo de 50 al más cercano. El motor (007 y 008, que pasan a ser las SPEC 09 y 10) lo recibe como `RoundingRule`, sin importar `parametros`.
+  - La regla de corrimiento (en cascada o solo la cuota afectada, D13) y los días de la semana no hábiles ya están en los parámetros, con la cascada por defecto. El calendario del motor los recibe como parámetros.
+  - Los días y el horario de cobro se guardan, pero nada los aplica todavía. Lo decide la spec de pagos (016).
+  - La zona horaria sigue fija en `America/Bogota`.
+  - El cierre de sesión por inactividad (30 minutos) y la duración máxima (12 horas) son parámetros, y los aplica `SessionPolicyMiddleware`.
+  - El tipo de documento de los usuarios internos sigue con la lista fija de la SPEC 04. El catálogo de la SPEC 07 es para clientes y terceros.
 
 #### 006 · Productos de crédito y tasas
 - **Incluye:**
@@ -342,7 +356,7 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 
 ### Bloque G: Cierre
 
-#### 024 · Consulta y retención de auditoría
+#### 024 · Consulta y retención de auditoría (será la SPEC 26)
 - **Incluye:**
   - Pantalla solo para administradores, con filtros por usuario, fecha y entidad.
   - **Depuración automática a 1 año** (D11), según la categoría del registro (P5).

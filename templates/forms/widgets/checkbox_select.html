@@ -1,0 +1,9 @@
+{% comment %}
+  Lista de casillas (CheckboxSelectMultiple) en línea, con las clases de
+  Bootstrap 4 (SPEC 06). El campo va dentro de un fieldset con su leyenda.
+{% endcomment %}<div{% if widget.attrs.id %} id="{{ widget.attrs.id }}"{% endif %}>{% for group_name, group_choices, group_index in widget.optgroups %}{% for option in group_choices %}
+  <div class="form-check form-check-inline">
+    <input type="{{ option.type }}" name="{{ option.name }}" value="{{ option.value|stringformat:'s' }}"{% include "forms/widgets/attrs.html" with widget=option base_class="form-check-input" %}>
+    <label class="form-check-label" for="{{ option.attrs.id }}">{{ option.label }}</label>
+  </div>{% endfor %}{% endfor %}
+</div>

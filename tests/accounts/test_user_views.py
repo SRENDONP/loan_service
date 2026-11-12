@@ -1,6 +1,6 @@
 """Pruebas de las pantallas de gestión de usuarios (SPEC 04, §3.6 y §3.7)."""
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from django.urls import reverse
@@ -144,6 +144,28 @@ def test_detail_shows_data_and_access(admin_client, make_user):
     assert '<span class="badge badge-primary">Cajero/Cobrador</span>' in content
     assert "Pendiente en su próximo ingreso" in content
     assert "Desactivación" not in content
+
+
+def test_detail_shows_last_login_with_the_configured_date_format(
+    admin_client, make_user, global_settings
+):
+    # SPEC 06: la ficha usa el formato de fecha de los parámetros globales.
+    global_settings.date_format = "Y-m-d"
+    global_settings.save()
+    last_login = datetime(2026, 11, 12, 19, 5, tzinfo=UTC)  # 14:05 en Bogotá
+    target = make_user("pedro", last_login=last_login)
+
+    content = admin_client.get(detail_url(target)).content.decode()
+
+    assert "2026-11-12 14:05" in content
+
+
+def test_detail_shows_never_without_last_login(admin_client, make_user):
+    target = make_user("pedro")
+
+    content = admin_client.get(detail_url(target)).content.decode()
+
+    assert "Nunca" in content
 
 
 def test_detail_shows_lock_end_when_locked(admin_client, make_user):

@@ -4,3 +4,13 @@
  * Se carga después de css/sb-admin-2.min.css. No edites el CSS de la
  * plantilla: cualquier ajuste visual va en este archivo (constitución §13).
  */
+
+/*
+ * Leyenda de un grupo de casillas (fieldset del renderizador de formularios):
+ * Bootstrap le da el tamaño de un título; aquí queda igual que una etiqueta
+ * de campo (SPEC 06, días de cobro).
+ */
+.form-group > legend {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}

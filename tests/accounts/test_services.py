@@ -4,7 +4,6 @@ from datetime import timedelta
 
 import pytest
 from django.db import connection
-from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -181,12 +180,15 @@ def test_unknown_user_failure_writes_nothing_but_the_audit():
     assert AuditEvent.objects.filter(action=AuditAction.LOGIN_FAILED).count() == 2
 
 
-@override_settings(ACCOUNTS_MAX_FAILED_ATTEMPTS=2, ACCOUNTS_LOCKOUT_MINUTES=30)
-def test_lockout_follows_policy_settings(make_user, password):
+def test_lockout_follows_policy_settings(make_user, password, global_settings):
+    # El mínimo del parámetro es 3 intentos (SPEC 06, §3.2).
+    global_settings.max_failed_attempts = 3
+    global_settings.lockout_minutes = 30
+    global_settings.save()
     now = timezone.now()
     user = make_user("ana")
 
-    fail("ana", 2, now)
+    fail("ana", 3, now)
 
     user.refresh_from_db()
     assert user.locked_until == now + timedelta(minutes=30)

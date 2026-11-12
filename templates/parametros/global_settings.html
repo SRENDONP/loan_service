@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load i18n formato %}
+
+{% comment %}
+  Parámetros globales (SPEC 06, §3.9). Modelo: blank.html, con una tarjeta de
+  cards.html por grupo. Cada tarjeta tiene su formulario y envía a su ruta, así
+  un error en un grupo no bloquea los demás. Los campos los dibuja el
+  renderizador de formularios del proyecto.
+{% endcomment %}
+
+{% block title %}{% translate "Parámetros globales" %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-1 text-gray-800">{% translate "Parámetros globales" %}</h1>
+  <p class="mb-4 small text-gray-600" id="last-update">
+    {% if settings_row.updated_by %}
+      {% blocktranslate with moment=settings_row.updated_at|fecha_hora user=settings_row.updated_by.get_full_name|default:settings_row.updated_by.username %}Última edición: {{ moment }}, por {{ user }}.{% endblocktranslate %}
+    {% else %}
+      {% translate "Todavía nadie ha editado los parámetros: se usan los valores iniciales." %}
+    {% endif %}
+  </p>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+
+    <div class="col-xl-6">
+
+      <!-- Negocio y formatos -->
+      <div class="card shadow mb-4" id="card-business">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Negocio y formatos" %}</h2>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'parametros:update_business' %}" novalidate>
+            {% csrf_token %}
+            {{ forms.business }}
+            <div class="form-group">
+              <span class="d-block mb-2">{% translate "Icono vigente" %}</span>
+              <span class="text-primary" id="brand-icon-preview"><i class="{{ settings_row.brand_icon }} fa-2x" aria-hidden="true"></i></span>
+            </div>
+            <div class="form-group">
+              <label for="time-zone">{% translate "Zona horaria" %}</label>
+              <input type="text" readonly class="form-control-plaintext" id="time-zone" value="{{ time_zone }}">
+              <small class="form-text text-muted">{% translate "Es fija para todo el sistema." %}</small>
+            </div>
+            <button type="submit" class="btn btn-primary">{% translate "Guardar negocio y formatos" %}</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Redondeo -->
+      <div class="card shadow mb-4" id="card-rounding">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Redondeo" %}</h2>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'parametros:update_rounding' %}" novalidate>
+            {% csrf_token %}
+            {{ forms.rounding }}
+            <button type="submit" class="btn btn-primary">{% translate "Guardar redondeo" %}</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="col-xl-6">
+
+      <!-- Cobro y días no hábiles -->
+      <div class="card shadow mb-4" id="card-collection">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Cobro y días no hábiles" %}</h2>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'parametros:update_collection' %}" novalidate>
+            {% csrf_token %}
+            {{ forms.collection }}
+            <button type="submit" class="btn btn-primary">{% translate "Guardar cobro" %}</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Seguridad y sesión -->
+      <div class="card shadow mb-4" id="card-security">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Seguridad y sesión" %}</h2>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'parametros:update_security' %}" novalidate>
+            {% csrf_token %}
+            {{ forms.security }}
+            <button type="submit" class="btn btn-primary">{% translate "Guardar seguridad" %}</button>
+          </form>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+{% endblock %}

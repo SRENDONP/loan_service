@@ -152,3 +152,22 @@ def test_user_menu_has_password_change_divider_and_logout(auth_client):
     assert change < divider < logout
     assert "Cambiar contraseña" in menu
     assert "Cerrar sesión" in menu
+
+
+def test_change_follows_the_min_length_parameter(
+    auth_client, user, password, global_settings
+):
+    # SPEC 06, §5: con 12 de longitud mínima, una contraseña de 11 se rechaza.
+    global_settings.password_min_length = 12
+    global_settings.save()
+
+    response = auth_client.post(PASSWORD_CHANGE, change_data(password, "cuota202701"))
+
+    assert response.status_code == 200
+    assert "Debe tener al menos 12 caracteres." in response.content.decode()
+    user.refresh_from_db()
+    assert user.check_password(password)
+
+    accepted = auth_client.post(PASSWORD_CHANGE, change_data(password, "cuota2027012"))
+
+    assert accepted.status_code == 302

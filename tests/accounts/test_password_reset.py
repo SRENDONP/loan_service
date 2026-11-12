@@ -4,7 +4,6 @@ import re
 from datetime import datetime, timedelta
 
 import pytest
-from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -206,8 +205,11 @@ def test_link_still_works_before_one_hour(client, make_user, mailoutbox, monkeyp
     assert client.get(link, follow=True).context["validlink"] is True
 
 
-@override_settings(PASSWORD_RESET_TIMEOUT=60)
-def test_link_duration_follows_policy(client, make_user, mailoutbox, monkeypatch):
+def test_link_duration_follows_policy(
+    client, make_user, mailoutbox, monkeypatch, global_settings
+):
+    global_settings.password_reset_timeout_minutes = 15
+    global_settings.save()
     make_user("ana", email="ana@example.com")
     request_reset(client, "ana@example.com")
     link = reset_link(mailoutbox[0])
@@ -215,7 +217,7 @@ def test_link_duration_follows_policy(client, make_user, mailoutbox, monkeypatch
     monkeypatch.setattr(
         password_reset_token_generator,
         "_now",
-        lambda: datetime.now() + timedelta(minutes=2),
+        lambda: datetime.now() + timedelta(minutes=16),
     )
 
     assert client.get(link, follow=True).context["validlink"] is False

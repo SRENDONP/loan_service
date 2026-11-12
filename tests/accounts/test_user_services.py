@@ -3,7 +3,6 @@
 import pytest
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.test import override_settings
 
 from apps.accounts import services
 from apps.accounts.models import User
@@ -63,8 +62,9 @@ def test_temporary_password_follows_the_rules(attempt):
     validate_password(password)
 
 
-@override_settings(ACCOUNTS_PASSWORD_MIN_LENGTH=16)
-def test_temporary_password_uses_policy_length_when_longer():
+def test_temporary_password_uses_policy_length_when_longer(global_settings):
+    global_settings.password_min_length = 16
+    global_settings.save()
     assert len(generate_temporary_password()) == 16
 
 

@@ -49,4 +49,8 @@ def audit_logout(
     # Cerrar sesión sin tenerla abierta no deja registro.
     if user is None:
         return
-    record(AuditAction.LOGOUT, actor=user, target=user)
+    # El cierre automático (inactividad o duración máxima) deja su motivo en la
+    # petición (SPEC 06, §3.5). El cierre voluntario no lleva `extra`.
+    reason = getattr(request, "audit_logout_reason", None)
+    extra = {"reason": reason} if reason else None
+    record(AuditAction.LOGOUT, actor=user, target=user, extra=extra)

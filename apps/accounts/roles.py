@@ -39,8 +39,17 @@ USER_MANAGEMENT_PERMISSIONS = frozenset(
     }
 )
 
+# Parámetros globales (SPEC 06, §3.8). Solo el Administrador los ve y los edita;
+# el resto del sistema los lee por el servicio, sin permisos.
+PARAMETROS_PERMISSIONS = frozenset(
+    {
+        "parametros.view_globalsettings",
+        "parametros.change_globalsettings",
+    }
+)
+
 ROLE_PERMISSIONS: dict[Role, frozenset[str]] = {
-    Role.ADMINISTRATOR: USER_MANAGEMENT_PERMISSIONS,
+    Role.ADMINISTRATOR: USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS,
     Role.SUPERVISOR: frozenset(),
     Role.COLLECTOR: frozenset(),
     Role.VIEWER: frozenset(),

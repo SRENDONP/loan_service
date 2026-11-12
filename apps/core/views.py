@@ -1,6 +1,8 @@
 """Vistas transversales del sistema."""
 
 import logging
+from datetime import date, datetime
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -9,6 +11,7 @@ from django.contrib.messages.storage.base import Message
 from django.db import DatabaseError, connection
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_http_methods
 
@@ -98,5 +101,12 @@ def components(request: HttpRequest) -> HttpResponse:
             _("Estado"),
         ],
         "table_rows": DEMO_TABLE_ROWS,
+        # Valores sin formato para los filtros moneda, fecha y fecha_hora (SPEC 06).
+        "format_demo": {
+            "amount": Decimal("1234567.5"),
+            "negative": Decimal("-1500"),
+            "date": date(2026, 12, 31),
+            "datetime": timezone.make_aware(datetime(2026, 12, 31, 14, 5)),
+        },
     }
     return render(request, "core/components.html", context)

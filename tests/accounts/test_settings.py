@@ -28,9 +28,11 @@ def project_password_hashers() -> list[str]:
     return module.PASSWORD_HASHERS
 
 
-def test_session_expires_at_browser_close_and_lasts_twelve_hours():
+def test_session_expires_at_browser_close_and_lasts_at_most_a_day():
+    # SPEC 06, §3.5: la duración real es un parámetro (12 horas por defecto) y
+    # la cookie usa el máximo del rango como tope duro.
     assert settings.SESSION_EXPIRE_AT_BROWSER_CLOSE is True
-    assert settings.SESSION_COOKIE_AGE == 12 * 60 * 60
+    assert settings.SESSION_COOKIE_AGE == 24 * 60 * 60
 
 
 def test_login_required_middleware_follows_authentication():
@@ -40,10 +42,12 @@ def test_login_required_middleware_follows_authentication():
         "django.contrib.auth.middleware.LoginRequiredMiddleware"
     )
 
-    # Entre los dos solo va el contexto de auditoría (SPEC 05, §3.4), que no
-    # responde por sí mismo.
+    # Entre los dos van el contexto de auditoría (SPEC 05, §3.4) y el cierre de
+    # sesión por inactividad (SPEC 06, §3.5), que solo responde a usuarios con
+    # sesión.
     assert middleware[auth + 1 : login_required] == [
-        "apps.auditoria.middleware.AuditContextMiddleware"
+        "apps.auditoria.middleware.AuditContextMiddleware",
+        "apps.accounts.middleware.SessionPolicyMiddleware",
     ]
 
 

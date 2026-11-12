@@ -1,21 +1,19 @@
 """Context processors de la app core.
 
 `branding` es el único punto del que las plantillas leen la identidad del
-negocio. La spec de parámetros globales solo cambia esta función para leer el
-nombre y el logo desde `parametros` (ADR-001); las plantillas no se tocan.
+negocio. Desde la SPEC 06 toma el nombre y el icono de los parámetros globales,
+por medio de su servicio (ADR-001); las plantillas no cambiaron.
 """
 
 from django.http import HttpRequest
-from django.utils.translation import gettext_lazy as _
 
-# Valores provisionales hasta la spec de parámetros globales.
-BUSINESS_NAME = _("Gestión de préstamos")
-BRAND_ICON = "fas fa-hand-holding-usd"
+from apps.parametros.services import get_settings
 
 
 def branding(request: HttpRequest) -> dict[str, object]:
     """Entrega el nombre del negocio y el icono de la marca a las plantillas."""
+    settings = get_settings()
     return {
-        "business_name": BUSINESS_NAME,
-        "brand_icon": BRAND_ICON,
+        "business_name": settings.business_name,
+        "brand_icon": settings.brand_icon,
     }

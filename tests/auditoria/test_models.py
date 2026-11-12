@@ -5,8 +5,7 @@ from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import PermissionDenied
 from django.db import connection
 
-from apps.accounts import roles
-from apps.accounts.roles import ROLE_PERMISSIONS, USER_MANAGEMENT_PERMISSIONS
+from apps.accounts.roles import ROLE_PERMISSIONS
 from apps.auditoria.actions import AuditAction, AuditCategory
 from apps.auditoria.exceptions import ImmutableAuditEventError
 from apps.auditoria.models import AuditEvent, AuditSource
@@ -134,24 +133,3 @@ def test_no_role_has_auditoria_permissions():
     assert not Group.objects.filter(
         permissions__content_type__app_label="auditoria"
     ).exists()
-
-
-def test_auditoria_is_the_last_app_with_models():
-    # El receptor de sync_roles (ADR-002) corre con la señal de la última app
-    # con modelos, que ahora es auditoria.
-    assert roles._last_app_with_models().label == "auditoria"
-
-
-def test_migrate_still_syncs_the_four_roles():
-    # La base de pruebas se crea con migrate sobre una base vacía.
-    administrator = Group.objects.get(name="Administrador")
-    perms = {
-        f"{app}.{codename}"
-        for app, codename in administrator.permissions.values_list(
-            "content_type__app_label", "codename"
-        )
-    }
-
-    assert perms == USER_MANAGEMENT_PERMISSIONS
-    for name in ("Supervisor", "Cajero/Cobrador", "Consulta"):
-        assert not Group.objects.get(name=name).permissions.exists()

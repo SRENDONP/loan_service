@@ -1,5 +1,5 @@
 {% if field.errors %}
-  <div class="invalid-feedback"{% if field.auto_id %} id="{{ field.auto_id }}_error"{% endif %}>
+  <div class="invalid-feedback{% if always_visible %} d-block{% endif %}"{% if field.auto_id %} id="{{ field.auto_id }}_error"{% endif %}>
     {% for error in field.errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
   </div>
 {% endif %}

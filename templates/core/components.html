@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n datatables %}
+{% load static i18n datatables formato %}
 
 {% block title %}{% translate "Componentes" %}{% endblock %}
 
@@ -105,6 +105,26 @@
 
     </div>
 
+  </div>
+
+  <!-- Formato de dinero y fechas (SPEC 06) -->
+  <div class="card shadow mb-4">
+    <div class="card-header py-3">
+      <h6 class="m-0 font-weight-bold text-primary">{% translate "Formato de dinero y fechas" %}</h6>
+    </div>
+    <div class="card-body">
+      <p class="small text-gray-600">{% translate "Los filtros siguen la moneda y el formato de fecha de los parámetros globales." %}</p>
+      <dl class="row mb-0" id="format-demo">
+        <dt class="col-sm-4"><code>|moneda</code></dt>
+        <dd class="col-sm-8">{{ format_demo.amount|moneda }}</dd>
+        <dt class="col-sm-4"><code>|moneda</code> {% translate "(negativo)" %}</dt>
+        <dd class="col-sm-8">{{ format_demo.negative|moneda }}</dd>
+        <dt class="col-sm-4"><code>|fecha</code></dt>
+        <dd class="col-sm-8">{{ format_demo.date|fecha }}</dd>
+        <dt class="col-sm-4"><code>|fecha_hora</code></dt>
+        <dd class="col-sm-8">{{ format_demo.datetime|fecha_hora }}</dd>
+      </dl>
+    </div>
   </div>
 
   <!-- Tabla -->
