@@ -11,7 +11,6 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils import formats, timezone
 from django.utils.cache import add_never_cache_headers
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
@@ -45,6 +44,7 @@ from apps.accounts.services import (
 from apps.accounts.tokens import password_reset_token_generator
 from apps.auditoria.actions import AuditAction
 from apps.auditoria.services import diff, record, snapshot
+from apps.parametros.formatting import format_datetime as parametros_format_datetime
 
 
 @method_decorator(login_not_required, name="dispatch")
@@ -209,9 +209,10 @@ def status_badge(user: User) -> SafeString:
 
 
 def format_datetime(value) -> str:
+    """La fecha y hora con el formato de los parámetros globales (SPEC 06)."""
     if value is None:
         return _("Nunca")
-    return formats.date_format(timezone.localtime(value), "SHORT_DATETIME_FORMAT")
+    return parametros_format_datetime(value)
 
 
 class UserListView(PermissionRequiredMixin, TemplateView):

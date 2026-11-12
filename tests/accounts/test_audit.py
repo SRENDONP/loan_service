@@ -11,7 +11,6 @@ from datetime import timedelta
 import pytest
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -42,8 +41,11 @@ def post_login(client, username: str, password: str):
 # Bloqueo --------------------------------------------------------------------
 
 
-@override_settings(ACCOUNTS_MAX_FAILED_ATTEMPTS=3)
-def test_attempt_that_reaches_the_limit_records_failed_and_locked(client, user):
+def test_attempt_that_reaches_the_limit_records_failed_and_locked(
+    client, user, global_settings
+):
+    global_settings.max_failed_attempts = 3
+    global_settings.save()
     for _ in range(3):
         post_login(client, "cobrador", WRONG_PASSWORD)
 
@@ -64,8 +66,9 @@ def test_attempt_that_reaches_the_limit_records_failed_and_locked(client, user):
     assert locked.request_id == last_failed.request_id
 
 
-@override_settings(ACCOUNTS_MAX_FAILED_ATTEMPTS=3)
-def test_attempts_below_the_limit_do_not_record_a_lock(client, user):
+def test_attempts_below_the_limit_do_not_record_a_lock(client, user, global_settings):
+    global_settings.max_failed_attempts = 3
+    global_settings.save()
     for _ in range(2):
         post_login(client, "cobrador", WRONG_PASSWORD)
 

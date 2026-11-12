@@ -13,6 +13,7 @@ from django.test.utils import CaptureQueriesContext
 from apps.accounts import roles
 from apps.accounts.models import User
 from apps.accounts.roles import (
+    PARAMETROS_PERMISSIONS,
     ROLE_PERMISSIONS,
     USER_MANAGEMENT_PERMISSIONS,
     Role,
@@ -46,9 +47,22 @@ def test_migrate_creates_the_four_groups():
     assert ROLE_NAMES <= set(Group.objects.values_list("name", flat=True))
 
 
-def test_administrator_has_exactly_user_management_permissions():
-    assert group_perms("Administrador") == USER_MANAGEMENT_PERMISSIONS
+def test_administrator_has_user_management_and_parametros_permissions():
+    assert group_perms("Administrador") == (
+        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS
+    )
     assert len(USER_MANAGEMENT_PERMISSIONS) == 7
+    # SPEC 06, §3.8.
+    assert PARAMETROS_PERMISSIONS == {
+        "parametros.view_globalsettings",
+        "parametros.change_globalsettings",
+    }
+
+
+def test_only_the_administrator_has_parametros_permissions():
+    for role, perms in ROLE_PERMISSIONS.items():
+        has_parametros = any(perm.startswith("parametros.") for perm in perms)
+        assert has_parametros is (role is Role.ADMINISTRATOR)
 
 
 @pytest.mark.parametrize("name", ["Supervisor", "Cajero/Cobrador", "Consulta"])
@@ -75,7 +89,7 @@ def test_sync_restores_missing_permission():
 
     sync_roles()
 
-    assert group_perms("Administrador") == USER_MANAGEMENT_PERMISSIONS
+    assert group_perms("Administrador") == ROLE_PERMISSIONS[Role.ADMINISTRATOR]
 
 
 def test_sync_recreates_a_deleted_group():
@@ -182,7 +196,7 @@ def test_groups_survive_flush():
     call_command("flush", interactive=False, verbosity=0)
 
     assert ROLE_NAMES <= set(Group.objects.values_list("name", flat=True))
-    assert group_perms("Administrador") == USER_MANAGEMENT_PERMISSIONS
+    assert group_perms("Administrador") == ROLE_PERMISSIONS[Role.ADMINISTRATOR]
 
 
 def test_with_role_includes_inactive_users(make_user):

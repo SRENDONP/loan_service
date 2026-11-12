@@ -11,7 +11,8 @@
   <fieldset class="form-group"{% if field.aria_describedby %} aria-describedby="{{ field.aria_describedby }}"{% endif %}>
     {% if field.label %}{{ field.legend_tag }}{% endif %}
     {{ field }}
-    {% include "forms/field_errors.html" %}
+    {# Sin un .is-invalid hermano, Bootstrap oculta el error: se fuerza visible. #}
+    {% include "forms/field_errors.html" with always_visible=True %}
     {% include "forms/help_text.html" %}
   </fieldset>
 {% else %}

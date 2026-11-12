@@ -94,6 +94,7 @@ def test_empty_sections_do_not_show_their_heading(auth_client, settings):
 # Context processor branding --------------------------------------------
 
 
+@pytest.mark.django_db
 def test_branding_returns_business_name_and_icon(rf: RequestFactory):
     context = branding(rf.get("/"))
 
@@ -101,6 +102,45 @@ def test_branding_returns_business_name_and_icon(rf: RequestFactory):
     assert context["brand_icon"] == "fas fa-hand-holding-usd"
 
 
+@pytest.mark.django_db
+def test_branding_follows_global_settings(rf: RequestFactory, global_settings):
+    global_settings.business_name = "Créditos Ya"
+    global_settings.brand_icon = "fas fa-coins"
+    global_settings.save()
+
+    context = branding(rf.get("/"))
+
+    assert context == {"business_name": "Créditos Ya", "brand_icon": "fas fa-coins"}
+
+
+@pytest.mark.django_db
+def test_business_name_and_icon_change_in_layout_and_login(
+    client, auth_client, global_settings
+):
+    # SPEC 06: el cambio aplica en la siguiente petición, sin reiniciar.
+    global_settings.business_name = "Créditos Ya"
+    global_settings.brand_icon = "fas fa-coins"
+    global_settings.save()
+
+    html = auth_client.get(HOME).content.decode()
+    sidebar = html.split('<ul class="navbar-nav', 1)[1].split("</ul>", 1)[0]
+    footer = html.split('<footer class="sticky-footer', 1)[1].split("</footer>", 1)[0]
+
+    assert "<title>Créditos Ya - " in html
+    assert "Créditos Ya" in sidebar
+    assert '<i class="fas fa-coins"></i>' in sidebar
+    assert "Créditos Ya" in footer
+    assert "Gestión de préstamos" not in html
+
+    auth_client.logout()
+    login = client.get(reverse("accounts:login")).content.decode()
+
+    assert "<title>Créditos Ya - " in login
+    assert '<i class="fas fa-coins fa-2x"' in login
+    assert "Gestión de préstamos" not in login
+
+
+@pytest.mark.django_db
 def test_branding_reaches_the_template_context(rf: RequestFactory):
     """El context processor está registrado en TEMPLATES."""
     template = engines["django"].from_string("{{ business_name }}|{{ brand_icon }}")
@@ -235,6 +275,20 @@ def test_components_page_available_with_debug(auth_client, settings):
     assert 'data-confirm="¿Quieres ejecutar la acción de prueba?"' in html
     assert 'name="accepts_terms"' in html
     assert "btn-icon-split" in html
+
+
+@pytest.mark.django_db
+def test_components_page_shows_format_filters(auth_client, settings):
+    # SPEC 06, §3.6: ejemplo de los filtros moneda, fecha y fecha_hora.
+    settings.DEBUG = True
+
+    html = auth_client.get(COMPONENTS).content.decode()
+    demo = html.split('id="format-demo"', 1)[1].split("</dl>", 1)[0]
+
+    assert "$1.234.568" in demo
+    assert "-$1.500" in demo
+    assert "31/12/2026" in demo
+    assert "31/12/2026 14:05" in demo
 
 
 @pytest.mark.django_db

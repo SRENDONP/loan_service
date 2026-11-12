@@ -30,6 +30,9 @@ def test_health_503_when_database_fails(client):
     assert b"db-secret-host" not in response.content
 
 
+# La página 403 de CSRF extiende base.html, que lee el nombre del negocio de los
+# parámetros globales (SPEC 06).
+@pytest.mark.django_db
 def test_health_post_without_csrf_token_is_forbidden(csrf_client):
     response = csrf_client.post(URL)
 

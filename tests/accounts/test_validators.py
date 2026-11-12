@@ -6,12 +6,14 @@ from django.contrib.auth.password_validation import (
     validate_password,
 )
 from django.core.exceptions import ValidationError
-from django.test import override_settings
 
 from apps.accounts.validators import (
     LettersAndDigitsValidator,
     PolicyMinimumLengthValidator,
 )
+
+# La longitud mínima sale de los parámetros globales (SPEC 06).
+pytestmark = pytest.mark.django_db
 
 
 def validation_messages(password: str) -> list[str]:
@@ -59,16 +61,22 @@ def test_messages_are_in_spanish():
     assert "Esta contraseña es completamente numérica." in messages
 
 
-@override_settings(ACCOUNTS_PASSWORD_MIN_LENGTH=12)
-def test_min_length_follows_policy():
+def test_min_length_follows_policy(global_settings):
+    global_settings.password_min_length = 12
+    global_settings.save()
     messages = validation_messages("cobro2026")
 
     assert "La contraseña es muy corta. Debe tener al menos 12 caracteres." in messages
 
 
-@override_settings(ACCOUNTS_PASSWORD_MIN_LENGTH=6)
-def test_lower_min_length_accepts_shorter_password():
-    PolicyMinimumLengthValidator().validate("cobr26")
+def test_password_at_policy_length_is_accepted(global_settings):
+    # El mínimo del parámetro es 8 (SPEC 06, §3.2); se prueba el borde con 10.
+    global_settings.password_min_length = 10
+    global_settings.save()
+
+    PolicyMinimumLengthValidator().validate("cobro20261")
+    with pytest.raises(ValidationError):
+        PolicyMinimumLengthValidator().validate("cobro2026")
 
 
 def test_help_texts_are_in_spanish():
@@ -78,8 +86,9 @@ def test_help_texts_are_in_spanish():
     assert "Tu contraseña debe tener al menos una letra y un número." in help_texts
 
 
-@override_settings(ACCOUNTS_PASSWORD_MIN_LENGTH=10)
-def test_min_length_help_text_follows_policy():
+def test_min_length_help_text_follows_policy(global_settings):
+    global_settings.password_min_length = 10
+    global_settings.save()
     assert (
         PolicyMinimumLengthValidator().get_help_text()
         == "Tu contraseña debe tener al menos 10 caracteres."

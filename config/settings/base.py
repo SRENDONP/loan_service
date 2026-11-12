@@ -34,11 +34,15 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.forms",
+    # ArrayField de los parámetros globales (SPEC 06).
+    "django.contrib.postgres",
     # Apps del proyecto
     "apps.core",
     "apps.accounts",
     # Registro de auditoría inmutable (SPEC 05).
     "apps.auditoria",
+    # Parámetros globales del negocio (SPEC 06).
+    "apps.parametros",
 ]
 
 # Modelo de usuario propio (SPEC 03). Cambiarlo con datos reales es muy costoso.
@@ -51,11 +55,12 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "core:home"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
-# Sesión provisional: se cierra al cerrar el navegador y dura como máximo una
-# jornada. El cierre por inactividad y la duración parametrizable van en una
-# spec futura (SPEC 03, §2).
+# La sesión se cierra al cerrar el navegador. La inactividad y la duración
+# máxima son parámetros globales y las aplica SessionPolicyMiddleware (SPEC 06,
+# §3.5). SESSION_COOKIE_AGE es el máximo del rango (24 horas), como tope duro
+# aunque el middleware fallara.
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 60 * 60 * 12
+SESSION_COOKIE_AGE = 60 * 60 * 24
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -65,6 +70,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     # IP, navegador, ruta e id de cada petición para la auditoría (SPEC 05).
     "apps.auditoria.middleware.AuditContextMiddleware",
+    # Cierre de sesión por inactividad y por duración máxima (SPEC 06).
+    "apps.accounts.middleware.SessionPolicyMiddleware",
     # Toda vista exige sesión salvo las marcadas con @login_not_required (SPEC 03).
     "django.contrib.auth.middleware.LoginRequiredMiddleware",
     # Quien debe cambiar la contraseña no pasa de esa pantalla (SPEC 03).
@@ -142,13 +149,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Políticas de cuentas (SPEC 03, §3.2). Solo las lee apps/accounts/policy.py; la
-# SPEC 06 las pasa a la base de datos.
-
-ACCOUNTS_MAX_FAILED_ATTEMPTS = 5
-ACCOUNTS_LOCKOUT_MINUTES = 15
-ACCOUNTS_PASSWORD_MIN_LENGTH = 8
-PASSWORD_RESET_TIMEOUT = 60 * 60
+# Las políticas de cuentas (intentos, bloqueo, longitud mínima y vigencia del
+# enlace de recuperación) viven en los parámetros globales desde la SPEC 06 y
+# solo se leen con apps/accounts/policy.py.
 
 
 # Auditoría (SPEC 05, §3.5). Número de proxies de confianza delante de la

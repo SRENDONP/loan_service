@@ -79,3 +79,17 @@ def csrf_client() -> Client:
 def csrf_token() -> str:
     """Token CSRF válido para usar en la cookie y en la cabecera X-CSRFToken."""
     return CSRF_TOKEN
+
+
+@pytest.fixture
+def global_settings(db):
+    """
+    La fila de parámetros globales (SPEC 06), lista para cambiar en una prueba.
+
+    Se cambian los atributos y se llama a `save()`; el cambio se revierte con la
+    transacción de la prueba. Reemplaza a `override_settings` para los valores
+    que ahora viven en `parametros`.
+    """
+    from apps.parametros.services import get_settings
+
+    return get_settings()

@@ -1,45 +1,45 @@
 """
-Servicio provisional de políticas de cuentas (SPEC 03, §3.2).
+Políticas de cuentas (SPEC 03, §3.2; SPEC 06, §3.4).
 
-Es el único lugar que lee los valores del bloqueo, la longitud mínima de la
-contraseña y la vigencia del enlace de recuperación. Hoy salen de los settings;
-la SPEC 06 (parámetros globales) cambia solo este módulo para leerlos de la base
-de datos, con el mismo patrón del context processor `branding` (ADR-001).
+Es el único lugar de `accounts` que lee los valores del bloqueo, la longitud
+mínima de la contraseña y la vigencia del enlace de recuperación. Desde la
+SPEC 06 salen del registro de parámetros globales, por medio de su servicio
+(ADR-001). Las funciones conservan el nombre y la firma de la SPEC 03.
 
-Las funciones se consultan en cada uso, nunca al arrancar, para que un cambio
-del valor aplique sin reiniciar.
+Se consultan en cada uso, nunca al arrancar, para que un cambio del valor
+aplique sin reiniciar.
 """
 
 from datetime import timedelta
 
-from django.conf import settings
-
-DEFAULT_MAX_FAILED_ATTEMPTS = 5
-DEFAULT_LOCKOUT_MINUTES = 15
-DEFAULT_PASSWORD_MIN_LENGTH = 8
-DEFAULT_PASSWORD_RESET_TIMEOUT = 60 * 60
+from apps.parametros.services import get_settings
 
 
 def get_max_failed_attempts() -> int:
     """Fallos seguidos que bloquean la cuenta."""
-    return getattr(
-        settings, "ACCOUNTS_MAX_FAILED_ATTEMPTS", DEFAULT_MAX_FAILED_ATTEMPTS
-    )
+    return get_settings().max_failed_attempts
 
 
 def get_lockout_duration() -> timedelta:
     """Tiempo que dura el bloqueo temporal de la cuenta."""
-    minutes = getattr(settings, "ACCOUNTS_LOCKOUT_MINUTES", DEFAULT_LOCKOUT_MINUTES)
-    return timedelta(minutes=minutes)
+    return timedelta(minutes=get_settings().lockout_minutes)
 
 
 def get_password_min_length() -> int:
     """Longitud mínima de la contraseña."""
-    return getattr(
-        settings, "ACCOUNTS_PASSWORD_MIN_LENGTH", DEFAULT_PASSWORD_MIN_LENGTH
-    )
+    return get_settings().password_min_length
 
 
 def get_password_reset_timeout() -> int:
     """Segundos que dura el enlace de recuperación de contraseña."""
-    return getattr(settings, "PASSWORD_RESET_TIMEOUT", DEFAULT_PASSWORD_RESET_TIMEOUT)
+    return get_settings().password_reset_timeout_minutes * 60
+
+
+def get_session_idle_timeout() -> timedelta:
+    """Tiempo sin actividad que cierra la sesión (SPEC 06, §3.5)."""
+    return timedelta(minutes=get_settings().session_idle_timeout_minutes)
+
+
+def get_session_max_duration() -> timedelta:
+    """Duración máxima de la sesión, aunque haya actividad (SPEC 06, §3.5)."""
+    return timedelta(hours=get_settings().session_max_hours)

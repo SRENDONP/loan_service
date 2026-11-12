@@ -44,6 +44,19 @@ class AuditAction(models.TextChoices):
     USER_SESSIONS_CLOSED = "users.sessions_closed", _(
         "Sesiones cerradas por un administrador"
     )
+    # Parámetros globales (SPEC 06, §3.7)
+    SETTINGS_BUSINESS_UPDATED = "parametros.business_updated", _(
+        "Parámetros del negocio editados"
+    )
+    SETTINGS_COLLECTION_UPDATED = "parametros.collection_updated", _(
+        "Parámetros de cobro editados"
+    )
+    SETTINGS_ROUNDING_UPDATED = "parametros.rounding_updated", _(
+        "Regla de redondeo editada"
+    )
+    SETTINGS_SECURITY_UPDATED = "parametros.security_updated", _(
+        "Políticas de seguridad editadas"
+    )
 
 
 ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
@@ -64,4 +77,10 @@ ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
     AuditAction.USER_UNLOCKED: AuditCategory.SECURITY,
     AuditAction.USER_PASSWORD_RESET: AuditCategory.SECURITY,
     AuditAction.USER_SESSIONS_CLOSED: AuditCategory.SECURITY,
+    # Parámetros globales: el redondeo y el cobro cambian cómo se calcula y se
+    # cobra; el negocio y las políticas de acceso, la seguridad (SPEC 06, §3.7).
+    AuditAction.SETTINGS_BUSINESS_UPDATED: AuditCategory.SECURITY,
+    AuditAction.SETTINGS_COLLECTION_UPDATED: AuditCategory.FINANCIAL,
+    AuditAction.SETTINGS_ROUNDING_UPDATED: AuditCategory.FINANCIAL,
+    AuditAction.SETTINGS_SECURITY_UPDATED: AuditCategory.SECURITY,
 }
