@@ -87,7 +87,24 @@
     });
   }
 
+  // Submenú de la página activa en pantallas pequeñas: el menú lo marca
+  // abierto (`show`), y en menos de 768 px SB Admin 2 lo dibuja flotando sobre
+  // el contenido. sb-admin-2.js solo lo cierra al cambiar el tamaño de la
+  // ventana; aquí se cierra también al cargar, sin animación (SPEC 07).
+  function closeSubmenusOnSmallScreens() {
+    if ($(window).width() >= 768) {
+      return;
+    }
+    $(".sidebar .collapse.show").each(function () {
+      $(this).removeClass("show");
+      $('.sidebar [data-target="#' + this.id + '"]')
+        .addClass("collapsed")
+        .attr("aria-expanded", "false");
+    });
+  }
+
   $(function () {
+    closeSubmenusOnSmallScreens();
     initDataTables();
     initConfirmModal();
   });

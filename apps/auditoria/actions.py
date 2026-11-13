@@ -57,6 +57,20 @@ class AuditAction(models.TextChoices):
     SETTINGS_SECURITY_UPDATED = "parametros.security_updated", _(
         "Políticas de seguridad editadas"
     )
+    # Catálogos y festivos (SPEC 07, §3.8)
+    CATALOG_ITEM_CREATED = "catalogos.item_created", _("Ítem de catálogo creado")
+    CATALOG_ITEM_UPDATED = "catalogos.item_updated", _("Ítem de catálogo editado")
+    CATALOG_ITEM_DEACTIVATED = "catalogos.item_deactivated", _(
+        "Ítem de catálogo desactivado"
+    )
+    CATALOG_ITEM_REACTIVATED = "catalogos.item_reactivated", _(
+        "Ítem de catálogo reactivado"
+    )
+    HOLIDAY_CREATED = "festivos.created", _("Festivo creado")
+    HOLIDAY_UPDATED = "festivos.updated", _("Festivo editado")
+    HOLIDAY_DEACTIVATED = "festivos.deactivated", _("Festivo desactivado")
+    HOLIDAY_REACTIVATED = "festivos.reactivated", _("Festivo reactivado")
+    HOLIDAYS_LOADED = "festivos.loaded", _("Festivos oficiales cargados")
 
 
 ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
@@ -83,4 +97,16 @@ ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
     AuditAction.SETTINGS_COLLECTION_UPDATED: AuditCategory.FINANCIAL,
     AuditAction.SETTINGS_ROUNDING_UPDATED: AuditCategory.FINANCIAL,
     AuditAction.SETTINGS_SECURITY_UPDATED: AuditCategory.SECURITY,
+    # Catálogos de texto: configuración del negocio, como el grupo de negocio
+    # de la SPEC 06 (SPEC 07, §3.8).
+    AuditAction.CATALOG_ITEM_CREATED: AuditCategory.SECURITY,
+    AuditAction.CATALOG_ITEM_UPDATED: AuditCategory.SECURITY,
+    AuditAction.CATALOG_ITEM_DEACTIVATED: AuditCategory.SECURITY,
+    AuditAction.CATALOG_ITEM_REACTIVATED: AuditCategory.SECURITY,
+    # Festivos: cambian el calendario de cobro (SPEC 07, §3.8).
+    AuditAction.HOLIDAY_CREATED: AuditCategory.FINANCIAL,
+    AuditAction.HOLIDAY_UPDATED: AuditCategory.FINANCIAL,
+    AuditAction.HOLIDAY_DEACTIVATED: AuditCategory.FINANCIAL,
+    AuditAction.HOLIDAY_REACTIVATED: AuditCategory.FINANCIAL,
+    AuditAction.HOLIDAYS_LOADED: AuditCategory.FINANCIAL,
 }

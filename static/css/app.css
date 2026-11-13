@@ -14,3 +14,13 @@
   font-size: 1rem;
   margin-bottom: 0.5rem;
 }
+
+/*
+ * Entradas de un submenú del panel lateral: SB Admin 2 no las deja partir en
+ * dos líneas, y un nombre largo ("Tipos de relación de terceros", SPEC 07)
+ * se sale de la caja blanca. Mismo selector que la plantilla, para ganarle.
+ */
+.sidebar .nav-item .collapse .collapse-inner .collapse-item,
+.sidebar .nav-item .collapsing .collapse-inner .collapse-item {
+  white-space: normal;
+}

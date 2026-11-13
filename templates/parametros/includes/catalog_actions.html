@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+  Acciones de una fila del listado de un catálogo (SPEC 07, §3.10). Recibe
+  `catalog` e `item`. Desactivar y reactivar son POST con confirmación; un ítem
+  de sistema no se desactiva.
+{% endcomment %}
+<div class="d-flex flex-wrap">
+  <a href="{% url 'parametros:catalog_update' catalog.slug item.pk %}" class="btn btn-sm btn-light mr-1 mb-1">{% translate "Editar" %}</a>
+  {% if item.is_active %}
+    {% if not item.is_system %}
+      <form method="post" action="{% url 'parametros:catalog_deactivate' catalog.slug item.pk %}" class="mb-1"
+            data-confirm="{% blocktranslate with name=item.name %}{{ name }} dejará de ofrecerse en los formularios nuevos. Los registros que ya lo usan lo siguen mostrando. ¿Desactivar?{% endblocktranslate %}"
+            data-confirm-button="{% translate 'Desactivar' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Desactivar" %}</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'parametros:catalog_reactivate' catalog.slug item.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=item.name %}{{ name }} vuelve a ofrecerse en los formularios. ¿Reactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Reactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Reactivar" %}</button>
+    </form>
+  {% endif %}
+</div>

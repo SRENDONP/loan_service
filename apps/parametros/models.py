@@ -1,20 +1,26 @@
 """
-Parámetros globales del negocio (SPEC 06, §3.1 y §3.2, ADR-001).
+Parámetros globales (SPEC 06), catálogos y festivos (SPEC 07).
 
-Un registro único (`pk=1`) con un campo tipado por parámetro. Solo
-`apps.parametros.services` lo lee y lo escribe: el resto del sistema pasa por
-ese servicio, para que el día que haya varios negocios solo cambie el servicio.
+Los parámetros globales son un registro único (`pk=1`) con un campo tipado por
+parámetro (ADR-001). Solo `apps.parametros.services` lee y escribe estos
+modelos: el resto del sistema pasa por ese servicio, para que el día que haya
+varios negocios solo cambie el servicio.
 """
 
 from datetime import time
-from typing import Any, NoReturn
+from typing import Any, NoReturn, Self
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import (
+    MaxValueValidator,
+    MinValueValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 SINGLETON_PK = 1
@@ -307,6 +313,258 @@ class GlobalSettings(models.Model):
             errors["session_idle_timeout_minutes"] = _(
                 "La inactividad debe ser menor que la duración máxima."
             )
+
+        if errors:
+            raise ValidationError(errors)
+
+
+# Catálogos de texto (SPEC 07, §3.1)
+
+CODE_VALIDATOR = RegexValidator(
+    r"^[A-Z0-9_]+$",
+    _("Usa letras mayúsculas sin tildes, números y guion bajo."),
+)
+
+
+class CatalogItemQuerySet(models.QuerySet):
+    def active(self) -> Self:
+        """Los ítems activos, en el orden del catálogo."""
+        return self.filter(is_active=True)
+
+
+class CatalogItem(models.Model):
+    """
+    Base de los seis catálogos de texto. Cada catálogo es su propia tabla.
+
+    El código no cambia después de crearse; el nombre y el orden sí. Nunca se
+    borra un ítem: se desactiva.
+    """
+
+    code = models.CharField(
+        _("código"),
+        max_length=30,
+        validators=[CODE_VALIDATOR],
+        help_text=_("Letras mayúsculas, números y guion bajo. No cambia después."),
+    )
+    name = models.CharField(_("nombre"), max_length=100)
+    display_order = models.PositiveSmallIntegerField(
+        _("orden"),
+        default=0,
+        help_text=_("Los ítems se muestran de menor a mayor."),
+    )
+    is_active = models.BooleanField(_("activo"), default=True)
+    is_system = models.BooleanField(
+        _("de sistema"),
+        default=False,
+        editable=False,
+        help_text=_("El sistema lo usa por su código: no se desactiva."),
+    )
+
+    created_at = models.DateTimeField(_("creado"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("última edición"), auto_now=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("editado por"),
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+
+    objects = CatalogItemQuerySet.as_manager()
+
+    class Meta:
+        abstract = True
+        ordering = ("display_order", "name")
+        default_permissions = ("view", "add", "change")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["code"], name="%(app_label)s_%(class)s_unique_code"
+            ),
+            models.UniqueConstraint(
+                Lower("name"),
+                name="%(app_label)s_%(class)s_unique_name",
+                violation_error_message=_("Ya existe un ítem con ese nombre."),
+            ),
+            models.CheckConstraint(
+                condition=Q(is_system=False) | Q(is_active=True),
+                name="%(app_label)s_%(class)s_system_active",
+                violation_error_message=_("Un ítem de sistema siempre está activo."),
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+    def delete(self, *args: Any, **kwargs: Any) -> NoReturn:
+        raise PermissionDenied(
+            _("Los ítems de los catálogos no se borran: se desactivan.")
+        )
+
+    def clean_fields(self, exclude: Any = None) -> None:
+        # El código se normaliza antes de que lo vea `CODE_VALIDATOR`.
+        self.code = (self.code or "").strip().upper()
+        super().clean_fields(exclude=exclude)
+
+    def clean(self) -> None:
+        errors: dict[str, Any] = {}
+
+        self.name = (self.name or "").strip()
+        if not self.name:
+            errors["name"] = _("Escribe el nombre.")
+        elif (
+            type(self)
+            .objects.filter(name__iexact=self.name)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            errors["name"] = _("Ya existe un ítem con ese nombre.")
+
+        if errors:
+            raise ValidationError(errors)
+
+
+class DocumentType(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("tipo de documento")
+        verbose_name_plural = _("tipos de documento")
+
+
+class Occupation(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("ocupación")
+        verbose_name_plural = _("ocupaciones")
+
+
+class CreditPurpose(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("destino de crédito")
+        verbose_name_plural = _("destinos de crédito")
+
+
+class VoidReason(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("motivo de anulación")
+        verbose_name_plural = _("motivos de anulación")
+
+
+class RejectionReason(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("motivo de rechazo")
+        verbose_name_plural = _("motivos de rechazo")
+
+
+class ThirdPartyRelationType(CatalogItem):
+    class Meta(CatalogItem.Meta):
+        verbose_name = _("tipo de relación de terceros")
+        verbose_name_plural = _("tipos de relación de terceros")
+
+
+# Festivos (SPEC 07, §3.2)
+
+
+class HolidayOrigin(models.TextChoices):
+    OFFICIAL = "official", _("Oficial")
+    CUSTOM = "custom", _("Propio")
+
+
+class Holiday(models.Model):
+    """
+    Un día no hábil por fecha: un festivo oficial (calculado) o uno propio.
+
+    Los oficiales solo los crean la migración y el comando `cargar_festivos`,
+    y se identifican por `official_year` y `official_code`.
+    """
+
+    date = models.DateField(_("fecha"))
+    name = models.CharField(_("nombre"), max_length=100)
+    origin = models.CharField(
+        _("origen"),
+        max_length=10,
+        choices=HolidayOrigin.choices,
+        default=HolidayOrigin.CUSTOM,
+        editable=False,
+    )
+    official_code = models.CharField(
+        _("código oficial"), max_length=40, blank=True, default="", editable=False
+    )
+    official_year = models.PositiveSmallIntegerField(
+        _("año oficial"), null=True, blank=True, editable=False
+    )
+    is_active = models.BooleanField(_("activo"), default=True)
+
+    created_at = models.DateTimeField(_("creado"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("última edición"), auto_now=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name=_("editado por"),
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+    )
+
+    class Meta:
+        verbose_name = _("festivo")
+        verbose_name_plural = _("festivos")
+        ordering = ("date",)
+        default_permissions = ("view", "add", "change")
+        constraints = [
+            # Un solo festivo activo por fecha.
+            models.UniqueConstraint(
+                fields=["date"],
+                condition=Q(is_active=True),
+                name="parametros_holiday_unique_active_date",
+                violation_error_message=_("Ya hay un festivo activo en esa fecha."),
+            ),
+            # Un festivo oficial se identifica por su año y su código.
+            models.UniqueConstraint(
+                fields=["official_year", "official_code"],
+                condition=Q(origin=HolidayOrigin.OFFICIAL),
+                name="parametros_holiday_unique_official",
+            ),
+            # Oficial ⇔ tiene código y año; propio ⇔ no tiene ninguno de los dos.
+            models.CheckConstraint(
+                condition=(
+                    Q(origin=HolidayOrigin.OFFICIAL)
+                    & ~Q(official_code="")
+                    & Q(official_year__isnull=False)
+                )
+                | (
+                    Q(origin=HolidayOrigin.CUSTOM)
+                    & Q(official_code="")
+                    & Q(official_year__isnull=True)
+                ),
+                name="parametros_holiday_origin_fields",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.date.isoformat()})"
+
+    def delete(self, *args: Any, **kwargs: Any) -> NoReturn:
+        raise PermissionDenied(_("Los festivos no se borran: se desactivan."))
+
+    def clean(self) -> None:
+        errors: dict[str, Any] = {}
+
+        self.name = (self.name or "").strip()
+        if not self.name:
+            errors["name"] = _("Escribe el nombre.")
+
+        if (
+            self.is_active
+            and self.date is not None
+            and Holiday.objects.filter(date=self.date, is_active=True)
+            .exclude(pk=self.pk)
+            .exists()
+        ):
+            # Importación tardía: `formatting` lee los parámetros globales.
+            from apps.parametros.formatting import format_date
+
+            errors["date"] = _("Ya hay un festivo activo el %(date)s.") % {
+                "date": format_date(self.date)
+            }
 
         if errors:
             raise ValidationError(errors)

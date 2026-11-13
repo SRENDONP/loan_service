@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static i18n datatables %}
+
+{% comment %}
+  Listado de festivos de un año (SPEC 07, §3.10). Referencia: tables.html.
+  Las celdas llegan calculadas y escapadas desde HolidayListView. El selector de
+  año es un formulario GET, sin JavaScript.
+{% endcomment %}
+
+{% block title %}{% translate "Festivos" %}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+    <h1 class="h3 mb-2 text-gray-800">{% translate "Festivos" %}</h1>
+    {% if can_add %}
+      <a href="{% url 'parametros:holiday_create' %}" class="btn btn-sm btn-primary shadow-sm mb-2">
+        <i class="fas fa-plus fa-sm text-white-50"></i> {% translate "Nuevo festivo propio" %}
+      </a>
+    {% endif %}
+  </div>
+  <p class="mb-4">{% translate "Los festivos oficiales de Colombia se cargan por año. Agrega como festivo propio un día en que el negocio no abre. Un festivo activo no cuenta como día hábil en los cálculos nuevos." %}</p>
+{% endblock %}
+
+{% block content %}
+  {% for missing in missing_years %}
+    <div class="alert alert-warning" role="alert">
+      <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+      {% blocktranslate with year=missing %}No hay festivos oficiales cargados para {{ year }}. Pide a soporte que corra <code>cargar_festivos {{ year }}</code>.{% endblocktranslate %}
+    </div>
+  {% endfor %}
+
+  <form method="get" class="form-inline mb-4">
+    <label class="mr-2" for="holiday-year">{% translate "Año" %}</label>
+    <select class="custom-select mr-2" id="holiday-year" name="anio">
+      {% for option in years %}
+        <option value="{{ option }}"{% if option == year %} selected{% endif %}>{{ option }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">{% translate "Ver año" %}</button>
+  </form>
+
+  {% include "includes/datatable.html" with table_id="holiday-table" title=table_title columns=table_columns rows=table_rows keep_order=True %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

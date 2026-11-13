@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Crear un festivo propio o editar un festivo (SPEC 07, §3.10). Referencias:
+  blank.html con la tarjeta de cards.html. Al editar uno oficial, su origen y su
+  código se muestran como solo lectura.
+{% endcomment %}
+
+{% block title %}{% if creating %}{% translate "Nuevo festivo propio" %}{% else %}{% translate "Editar festivo" %}{% endif %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% if creating %}
+      {% translate "Nuevo festivo propio" %}
+    {% else %}
+      {% blocktranslate with name=holiday.name %}Editar {{ name }}{% endblocktranslate %}
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Datos del festivo" %}</h2>
+        </div>
+        <div class="card-body">
+          {% if creating %}
+            <p class="small text-gray-700">{% translate "Un festivo propio es un día en que el negocio no abre. Cuenta como día no hábil igual que un festivo oficial." %}</p>
+          {% else %}
+            <dl class="mb-3">
+              <dt class="small text-gray-700">{% translate "Origen" %}</dt>
+              <dd>{{ holiday.get_origin_display }}</dd>
+              {% if holiday.official_code %}
+                <dt class="small text-gray-700">{% translate "Código oficial" %}</dt>
+                <dd class="mb-0"><code>{{ holiday.official_code }}</code> · {{ holiday.official_year }}</dd>
+                <dd class="small text-gray-600 mb-0">{% translate "Si cambias la fecha, la carga de su año sigue reconociéndolo y no lo duplica." %}</dd>
+              {% endif %}
+            </dl>
+          {% endif %}
+          <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">
+              {% if creating %}{% translate "Crear festivo" %}{% else %}{% translate "Guardar cambios" %}{% endif %}
+            </button>
+            <a href="{% url 'parametros:holiday_list' %}{% if holiday %}?anio={{ holiday.date.year }}{% endif %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

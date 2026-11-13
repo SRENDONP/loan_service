@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Crear o editar un ítem de un catálogo (SPEC 07, §3.10). Referencias:
+  blank.html con la tarjeta de cards.html. Los campos los dibuja el renderizador
+  de formularios del proyecto. Al editar, el código es solo de lectura.
+{% endcomment %}
+
+{% block title %}{% if creating %}{% translate "Nuevo ítem" %}{% else %}{% translate "Editar ítem" %}{% endif %} · {{ catalog.label }}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% if creating %}
+      {% blocktranslate with catalog=catalog.label %}Nuevo ítem en {{ catalog }}{% endblocktranslate %}
+    {% else %}
+      {% blocktranslate with name=item_name %}Editar {{ name }}{% endblocktranslate %}
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{{ catalog.label }}</h2>
+        </div>
+        <div class="card-body">
+          {% if not creating %}
+            <dl class="mb-3">
+              <dt class="small text-gray-700">{% translate "Código" %}</dt>
+              <dd class="mb-0"><code>{{ item.code }}</code>
+                {% if item.is_system %}<span class="badge badge-info ml-1">{% translate "Sistema" %}</span>{% endif %}
+              </dd>
+              <dd class="small text-gray-600 mb-0">{% translate "El código no se puede cambiar." %}</dd>
+            </dl>
+          {% endif %}
+          <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">
+              {% if creating %}{% translate "Crear ítem" %}{% else %}{% translate "Guardar cambios" %}{% endif %}
+            </button>
+            <a href="{% url catalog.list_url_name %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

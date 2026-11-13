@@ -195,7 +195,7 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 - **Diseño:** un registro único de configuración, no constantes en el código (D1).
 - **Se dividió en dos specs:**
   - **SPEC 06 (`specs/06-parametros-globales.md`), implementada:** los parámetros globales.
-  - **SPEC 07, pendiente:** los catálogos (tipos de documento, ocupaciones, destinos de crédito, motivos de anulación y de rechazo, tipos de relación de terceros) y los festivos de Colombia con su carga inicial. Amplía `is_business_day` con los festivos sin cambiar su firma.
+  - **SPEC 07 (`specs/07-catalogos-y-festivos.md`), implementada:** los catálogos (tipos de documento, ocupaciones, destinos de crédito, motivos de anulación y de rechazo, tipos de relación de terceros) y los festivos de Colombia con su carga inicial. Amplía `is_business_day` con los festivos sin cambiar su firma.
 - **Decisiones de la SPEC 06 que afectan a las specs siguientes:**
   - Los parámetros globales solo se leen con `apps/parametros/services.py` (`get_settings`, `get_rounding_rule`, `is_business_day`). Un parámetro global nuevo es un campo tipado de `GlobalSettings`, nunca una constante ni un setting.
   - El redondeo por defecto es un múltiplo (1, 10, 50, 100, 500 o 1.000) y un modo (al más cercano, hacia arriba o hacia abajo), por defecto múltiplo de 50 al más cercano. El motor (007 y 008, que pasan a ser las SPEC 09 y 10) lo recibe como `RoundingRule`, sin importar `parametros`.
@@ -204,6 +204,15 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - La zona horaria sigue fija en `America/Bogota`.
   - El cierre de sesión por inactividad (30 minutos) y la duración máxima (12 horas) son parámetros, y los aplica `SessionPolicyMiddleware`.
   - El tipo de documento de los usuarios internos sigue con la lista fija de la SPEC 04. El catálogo de la SPEC 07 es para clientes y terceros.
+- **Decisiones de la SPEC 07 que afectan a las specs siguientes:**
+  - **Clientes y terceros (011 y 012, que pasan a ser las SPEC 13 y 14):** el tipo de documento, la ocupación y el tipo de relación son `ForeignKey` con `on_delete=PROTECT` a `DocumentType`, `Occupation` y `ThirdPartyRelationType` de `parametros`. Los formularios ofrecen solo los ítems activos (`get_active_items`).
+  - **Codeudor y referencias:** se buscan con `get_item_by_code(ThirdPartyRelationType, RELATION_CODEBTOR)` y `RELATION_PERSONAL_REFERENCE`. Son ítems de sistema: no se desactivan ni cambian de código.
+  - **Créditos (014, SPEC 16):** el destino es una `ForeignKey` opcional a `CreditPurpose`, y el rechazo, a `RejectionReason`.
+  - **Anulación de pagos (017, SPEC 19):** el motivo es una `ForeignKey` a `VoidReason`.
+  - **"Otro" y "Otra":** el catálogo no exige texto libre. Cada spec decide si lo pide.
+  - **Calendario del motor (008, SPEC 10):** recibe los festivos como el `frozenset` de `get_holidays(inicio, fin)`, de los dos orígenes, junto con los días de la semana no hábiles. No importa `parametros`.
+  - **Festivos por año:** solo cuentan los años cargados (2026 a 2030 al instalar). Los siguientes se cargan con `cargar_festivos <año>`, y la pantalla avisa si falta el año actual o el siguiente. Conviene que la spec de endurecimiento o de entrega lo deje en el manual de operación.
+  - **Auditoría:** los catálogos de texto auditan con `SECURITY` y los festivos con `FINANCIAL`. Ninguna categoría nueva.
 
 #### 006 · Productos de crédito y tasas
 - **Incluye:**
