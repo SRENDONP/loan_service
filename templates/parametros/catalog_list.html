@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% load static i18n datatables %}
+
+{% comment %}
+  Listado de un catálogo de texto (SPEC 07, §3.10). Referencia: tables.html.
+  Las celdas llegan calculadas y escapadas desde CatalogListView.
+{% endcomment %}
+
+{% block title %}{{ catalog.label }}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+    <h1 class="h3 mb-2 text-gray-800">{{ catalog.label }}</h1>
+    {% if can_add %}
+      <a href="{% url 'parametros:catalog_create' catalog.slug %}" class="btn btn-sm btn-primary shadow-sm mb-2">
+        <i class="fas fa-plus fa-sm text-white-50"></i> {% translate "Nuevo" %}
+      </a>
+    {% endif %}
+  </div>
+  <p class="mb-4">{% translate "Los ítems no se borran: se desactivan. Uno desactivado deja de ofrecerse en los formularios nuevos, pero los registros que ya lo usan lo siguen mostrando." %}</p>
+{% endblock %}
+
+{% block content %}
+  {% include "includes/datatable.html" with table_id="catalog-table" title=table_title columns=table_columns rows=table_rows keep_order=True %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

@@ -48,8 +48,27 @@ PARAMETROS_PERMISSIONS = frozenset(
     }
 )
 
+# Catálogos y festivos (SPEC 07, §3.9): ver, crear y editar los siete modelos.
+# No existe el permiso `delete`: los ítems y los festivos se desactivan. El resto
+# del sistema lee los ítems activos por el servicio, sin permisos.
+CATALOG_PERMISSIONS = frozenset(
+    f"parametros.{action}_{model}"
+    for model in (
+        "documenttype",
+        "occupation",
+        "creditpurpose",
+        "voidreason",
+        "rejectionreason",
+        "thirdpartyrelationtype",
+        "holiday",
+    )
+    for action in ("view", "add", "change")
+)
+
 ROLE_PERMISSIONS: dict[Role, frozenset[str]] = {
-    Role.ADMINISTRATOR: USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS,
+    Role.ADMINISTRATOR: (
+        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS | CATALOG_PERMISSIONS
+    ),
     Role.SUPERVISOR: frozenset(),
     Role.COLLECTOR: frozenset(),
     Role.VIEWER: frozenset(),

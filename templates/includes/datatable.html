@@ -7,6 +7,9 @@
   - columns: lista de encabezados.
   - rows: lista de filas; cada fila, una lista de valores ya calculados y
     formateados en el servidor. El JavaScript solo ordena, busca y pagina.
+  - keep_order (opcional): si es verdadero, DataTables conserva al cargar el
+    orden en que llegan las filas (`data-order="[]"`) en vez de ordenar por la
+    primera columna. Para listados con un orden propio (SPEC 07).
 
   La página carga los recursos de DataTables:
     {% block extra_css %}
@@ -25,7 +28,7 @@
   </div>
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-bordered" id="{{ table_id }}" width="100%" cellspacing="0" data-datatable aria-labelledby="{{ table_id }}-title">
+      <table class="table table-bordered" id="{{ table_id }}" width="100%" cellspacing="0" data-datatable{% if keep_order %} data-order="[]"{% endif %} aria-labelledby="{{ table_id }}-title">
         <thead>
           <tr>
             {% for column in columns %}<th>{{ column }}</th>{% endfor %}

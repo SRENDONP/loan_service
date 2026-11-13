@@ -21,9 +21,11 @@ from apps.parametros.services import (
 
 pytestmark = pytest.mark.django_db
 
-SUNDAY = date(2026, 11, 15)
-MONDAY = date(2026, 11, 16)
-SATURDAY = date(2026, 11, 14)
+# Una semana sin festivos. (El lunes 16 de noviembre de 2026 es festivo desde
+# la SPEC 07: Independencia de Cartagena.)
+SUNDAY = date(2026, 11, 22)
+MONDAY = date(2026, 11, 23)
+SATURDAY = date(2026, 11, 21)
 
 
 # Lectura

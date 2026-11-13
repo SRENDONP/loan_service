@@ -13,6 +13,7 @@ from django.test.utils import CaptureQueriesContext
 from apps.accounts import roles
 from apps.accounts.models import User
 from apps.accounts.roles import (
+    CATALOG_PERMISSIONS,
     PARAMETROS_PERMISSIONS,
     ROLE_PERMISSIONS,
     USER_MANAGEMENT_PERMISSIONS,
@@ -47,9 +48,9 @@ def test_migrate_creates_the_four_groups():
     assert ROLE_NAMES <= set(Group.objects.values_list("name", flat=True))
 
 
-def test_administrator_has_user_management_and_parametros_permissions():
+def test_administrator_has_user_management_parametros_and_catalog_permissions():
     assert group_perms("Administrador") == (
-        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS
+        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS | CATALOG_PERMISSIONS
     )
     assert len(USER_MANAGEMENT_PERMISSIONS) == 7
     # SPEC 06, §3.8.
@@ -57,6 +58,35 @@ def test_administrator_has_user_management_and_parametros_permissions():
         "parametros.view_globalsettings",
         "parametros.change_globalsettings",
     }
+
+
+def test_catalog_permissions_cover_the_seven_models_without_delete():
+    # SPEC 07, §3.9: view, add y change de los seis catálogos y los festivos.
+    from apps.parametros.catalogs import CATALOGS
+    from apps.parametros.models import Holiday
+
+    models = [catalog.model for catalog in CATALOGS] + [Holiday]
+    expected = {
+        f"parametros.{action}_{model._meta.model_name}"
+        for model in models
+        for action in ("view", "add", "change")
+    }
+
+    assert CATALOG_PERMISSIONS == expected
+    assert len(CATALOG_PERMISSIONS) == 21
+    assert not any("delete_" in perm for perm in CATALOG_PERMISSIONS)
+
+
+@pytest.mark.parametrize("perm", sorted(CATALOG_PERMISSIONS))
+def test_only_the_administrator_group_has_each_catalog_permission(perm):
+    codename = perm.split(".", 1)[1]
+    groups = Group.objects.filter(
+        name__in=ROLE_NAMES,
+        permissions__content_type__app_label="parametros",
+        permissions__codename=codename,
+    ).values_list("name", flat=True)
+
+    assert list(groups) == ["Administrador"]
 
 
 def test_only_the_administrator_has_parametros_permissions():

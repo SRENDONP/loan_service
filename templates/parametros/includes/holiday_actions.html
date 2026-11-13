@@ -1,0 +1,23 @@
+{% load i18n %}
+{% comment %}
+  Acciones de una fila del listado de festivos (SPEC 07, §3.10). Recibe
+  `holiday`. Desactivar y reactivar son POST con confirmación.
+{% endcomment %}
+<div class="d-flex flex-wrap">
+  <a href="{% url 'parametros:holiday_update' holiday.pk %}" class="btn btn-sm btn-light mr-1 mb-1">{% translate "Editar" %}</a>
+  {% if holiday.is_active %}
+    <form method="post" action="{% url 'parametros:holiday_deactivate' holiday.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=holiday.name %}{{ name }} dejará de contar como día no hábil en los cálculos nuevos. ¿Desactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Desactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Desactivar" %}</button>
+    </form>
+  {% else %}
+    <form method="post" action="{% url 'parametros:holiday_reactivate' holiday.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=holiday.name %}{{ name }} vuelve a contar como día no hábil en los cálculos nuevos. ¿Reactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Reactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Reactivar" %}</button>
+    </form>
+  {% endif %}
+</div>
