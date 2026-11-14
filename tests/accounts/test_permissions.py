@@ -83,7 +83,9 @@ def test_permission_required_without_permissions_is_a_programming_error():
 
 @pytest.mark.parametrize("url", ["/protegida/clase/", "/protegida/funcion/"])
 def test_user_without_permission_gets_403_without_redirect(client, make_user, url):
-    client.force_login(make_user(role=Role.VIEWER))
+    # Un rol sin permisos: desde la SPEC 08, Consulta ve productos y topes, y su
+    # menú necesitaría las rutas de `parametros`, que este urlconf no incluye.
+    client.force_login(make_user(role=Role.COLLECTOR))
 
     response = client.get(url)
 

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load i18n formato %}
+
+{% comment %}
+  Programar un valor de un tope de tasa (SPEC 08, §3.9). Referencias: blank.html
+  y register.html, con la tarjeta de cards.html. El valor vigente llega
+  calculado desde RateCapValueCreateView.
+{% endcomment %}
+
+{% block title %}{% translate "Programar valor" %} · {{ cap_type.name }}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">{% blocktranslate with name=cap_type.name %}Programar un valor de {{ name }}{% endblocktranslate %}</h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Nuevo valor" %}</h2>
+        </div>
+        <div class="card-body">
+          <p class="small text-gray-700">
+            {% if current %}
+              {% blocktranslate with value=current_value date=current.valid_from|fecha %}Valor vigente: {{ value }}, desde el {{ date }}.{% endblocktranslate %}
+            {% else %}
+              {% translate "Este tope no tiene un valor vigente hoy." %}
+            {% endif %}
+            {% translate "El valor nuevo cierra el anterior el día antes de empezar a regir." %}
+          </p>
+          <form method="post" data-confirm="{% translate 'Un valor que ya rige no se puede anular. ¿Programar este valor?' %}" data-confirm-button="{% translate 'Programar' %}">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">{% translate "Programar valor" %}</button>
+            <a href="{% url 'parametros:ratecap_detail' cap_type.pk %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -71,6 +71,17 @@ class AuditAction(models.TextChoices):
     HOLIDAY_DEACTIVATED = "festivos.deactivated", _("Festivo desactivado")
     HOLIDAY_REACTIVATED = "festivos.reactivated", _("Festivo reactivado")
     HOLIDAYS_LOADED = "festivos.loaded", _("Festivos oficiales cargados")
+    # Productos de crédito y topes de tasa (SPEC 08, §3.6)
+    PRODUCT_CREATED = "productos.created", _("Producto de crédito creado")
+    PRODUCT_UPDATED = "productos.updated", _("Producto de crédito editado")
+    PRODUCT_DEACTIVATED = "productos.deactivated", _("Producto de crédito desactivado")
+    PRODUCT_REACTIVATED = "productos.reactivated", _("Producto de crédito reactivado")
+    PRODUCT_RATE_SCHEDULED = "productos.rate_scheduled", _(
+        "Tasa de producto programada"
+    )
+    PRODUCT_RATE_VOIDED = "productos.rate_voided", _("Tasa de producto anulada")
+    RATE_CAP_VALUE_SCHEDULED = "topes.value_scheduled", _("Valor de tope programado")
+    RATE_CAP_VALUE_VOIDED = "topes.value_voided", _("Valor de tope anulado")
 
 
 ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
@@ -109,4 +120,14 @@ ACTION_CATEGORIES: dict[AuditAction, AuditCategory] = {
     AuditAction.HOLIDAY_DEACTIVATED: AuditCategory.FINANCIAL,
     AuditAction.HOLIDAY_REACTIVATED: AuditCategory.FINANCIAL,
     AuditAction.HOLIDAYS_LOADED: AuditCategory.FINANCIAL,
+    # Productos, tasas y topes: cambian lo que se cobra (SPEC 08, §3.6). Los
+    # tipos de tope usan las acciones `catalogos.*`.
+    AuditAction.PRODUCT_CREATED: AuditCategory.FINANCIAL,
+    AuditAction.PRODUCT_UPDATED: AuditCategory.FINANCIAL,
+    AuditAction.PRODUCT_DEACTIVATED: AuditCategory.FINANCIAL,
+    AuditAction.PRODUCT_REACTIVATED: AuditCategory.FINANCIAL,
+    AuditAction.PRODUCT_RATE_SCHEDULED: AuditCategory.FINANCIAL,
+    AuditAction.PRODUCT_RATE_VOIDED: AuditCategory.FINANCIAL,
+    AuditAction.RATE_CAP_VALUE_SCHEDULED: AuditCategory.FINANCIAL,
+    AuditAction.RATE_CAP_VALUE_VOIDED: AuditCategory.FINANCIAL,
 }

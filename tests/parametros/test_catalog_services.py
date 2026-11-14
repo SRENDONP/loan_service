@@ -8,6 +8,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 
 from apps.parametros.catalogs import (
     CATALOGS,
+    RATE_CAP_CATALOG,
     RELATION_CODEBTOR,
     RELATION_PERSONAL_REFERENCE,
     get_catalog,
@@ -57,7 +58,9 @@ def test_every_concrete_catalog_model_is_registered():
         model for model in CatalogItem.__subclasses__() if not model._meta.abstract
     }
 
-    assert concrete == {catalog.model for catalog in CATALOGS}
+    # Los tipos de tope de tasa no están en `CATALOGS`: tienen su propia
+    # pantalla con el historial de valores (SPEC 08, §3.4).
+    assert concrete == {catalog.model for catalog in (*CATALOGS, RATE_CAP_CATALOG)}
 
 
 def test_get_catalog_by_slug():

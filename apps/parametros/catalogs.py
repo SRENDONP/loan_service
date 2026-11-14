@@ -16,6 +16,7 @@ from apps.parametros.models import (
     CreditPurpose,
     DocumentType,
     Occupation,
+    RateCapType,
     RejectionReason,
     ThirdPartyRelationType,
     VoidReason,
@@ -25,6 +26,10 @@ from apps.parametros.models import (
 # specs de terceros y de créditos buscan estos ítems con `get_item_by_code`.
 RELATION_CODEBTOR = "CODEUDOR"
 RELATION_PERSONAL_REFERENCE = "REFERENCIA_PERSONAL"
+
+# Código del tipo de tope de sistema "Usura" (SPEC 08, §3.4). Aplica siempre a
+# todos los productos, así que no puede ser el tope adicional de ninguno.
+RATE_CAP_USURY = "USURA"
 
 
 @dataclass(frozen=True)
@@ -65,6 +70,11 @@ CATALOGS: tuple[Catalog, ...] = (
 )
 
 _BY_SLUG = {catalog.slug: catalog for catalog in CATALOGS}
+
+# Los tipos de tope de tasa (SPEC 08, §3.4) son un catálogo más y usan sus
+# servicios, pero no están en `CATALOGS`: no aparecen en el submenú "Catálogos"
+# porque tienen su propia pantalla con el historial de valores.
+RATE_CAP_CATALOG = Catalog("topes-tasa", RateCapType, _("Topes de tasa"), 10)
 
 
 def get_catalog(slug: str) -> Catalog:

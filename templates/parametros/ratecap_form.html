@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Crear o editar un tipo de tope de tasa (SPEC 08, §3.9). Es el formulario de un
+  ítem de catálogo de la SPEC 07 (código opcional, nombre y orden). Referencias:
+  blank.html con la tarjeta de cards.html. Al editar, el código es de lectura.
+{% endcomment %}
+
+{% block title %}{% if creating %}{% translate "Nuevo tope" %}{% else %}{% translate "Editar tope" %}{% endif %} · {% translate "Topes de tasa" %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% if creating %}
+      {% translate "Nuevo tope de tasa" %}
+    {% else %}
+      {% blocktranslate with name=cap_type.name %}Editar {{ name }}{% endblocktranslate %}
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Datos del tope" %}</h2>
+        </div>
+        <div class="card-body">
+          {% if creating %}
+            <p class="small text-gray-600">{% translate "Después de crearlo, programa su valor desde el detalle." %}</p>
+          {% else %}
+            <dl class="mb-3">
+              <dt class="small text-gray-700">{% translate "Código" %}</dt>
+              <dd class="mb-0"><code>{{ cap_type.code }}</code>
+                {% if cap_type.is_system %}<span class="badge badge-info ml-1">{% translate "Sistema" %}</span>{% endif %}
+              </dd>
+              <dd class="small text-gray-600 mb-0">{% translate "El código no se puede cambiar." %}</dd>
+            </dl>
+          {% endif %}
+          <form method="post">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">
+              {% if creating %}{% translate "Crear tope" %}{% else %}{% translate "Guardar cambios" %}{% endif %}
+            </button>
+            <a href="{% if creating %}{% url 'parametros:ratecap_list' %}{% else %}{% url 'parametros:ratecap_detail' cap_type.pk %}{% endif %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

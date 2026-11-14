@@ -1,0 +1,26 @@
+{% load i18n %}
+{% comment %}
+  Acciones de una fila del listado de topes de tasa (SPEC 08, §3.9). Recibe
+  `cap_type`. Desactivar y reactivar son POST con confirmación; la usura es de
+  sistema y no se desactiva.
+{% endcomment %}
+<div class="d-flex flex-wrap">
+  <a href="{% url 'parametros:ratecap_update' cap_type.pk %}" class="btn btn-sm btn-light mr-1 mb-1">{% translate "Editar" %}</a>
+  {% if cap_type.is_active %}
+    {% if not cap_type.is_system %}
+      <form method="post" action="{% url 'parametros:ratecap_deactivate' cap_type.pk %}" class="mb-1"
+            data-confirm="{% blocktranslate with name=cap_type.name %}{{ name }} dejará de ofrecerse como tope adicional de los productos. ¿Desactivar?{% endblocktranslate %}"
+            data-confirm-button="{% translate 'Desactivar' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Desactivar" %}</button>
+      </form>
+    {% endif %}
+  {% else %}
+    <form method="post" action="{% url 'parametros:ratecap_reactivate' cap_type.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=cap_type.name %}{{ name }} vuelve a ofrecerse como tope adicional. ¿Reactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Reactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Reactivar" %}</button>
+    </form>
+  {% endif %}
+</div>

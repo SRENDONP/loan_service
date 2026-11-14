@@ -1,4 +1,7 @@
-"""Rutas de los parámetros globales (SPEC 06, §3.9) y de los catálogos (SPEC 07)."""
+"""
+Rutas de los parámetros globales (SPEC 06, §3.9), de los catálogos (SPEC 07) y de
+los productos y los topes de tasa (SPEC 08).
+"""
 
 from django.urls import path
 
@@ -83,5 +86,71 @@ urlpatterns = [
         "festivos/<int:pk>/reactivar/",
         views.HolidayReactivateView.as_view(),
         name="holiday_reactivate",
+    ),
+]
+
+# Topes de tasa (SPEC 08, §3.9)
+urlpatterns += [
+    path("topes/", views.RateCapListView.as_view(), name="ratecap_list"),
+    path("topes/nuevo/", views.RateCapCreateView.as_view(), name="ratecap_create"),
+    path("topes/<int:pk>/", views.RateCapDetailView.as_view(), name="ratecap_detail"),
+    path(
+        "topes/<int:pk>/editar/",
+        views.RateCapUpdateView.as_view(),
+        name="ratecap_update",
+    ),
+    path(
+        "topes/<int:pk>/desactivar/",
+        views.RateCapDeactivateView.as_view(),
+        name="ratecap_deactivate",
+    ),
+    path(
+        "topes/<int:pk>/reactivar/",
+        views.RateCapReactivateView.as_view(),
+        name="ratecap_reactivate",
+    ),
+    path(
+        "topes/<int:pk>/valores/nuevo/",
+        views.RateCapValueCreateView.as_view(),
+        name="ratecap_value_create",
+    ),
+    path(
+        "topes/<int:pk>/valores/<int:value_pk>/anular/",
+        views.RateCapValueVoidView.as_view(),
+        name="ratecap_value_void",
+    ),
+]
+
+# Productos de crédito (SPEC 08, §3.9)
+urlpatterns += [
+    path("productos/", views.ProductListView.as_view(), name="product_list"),
+    path("productos/nuevo/", views.ProductCreateView.as_view(), name="product_create"),
+    path(
+        "productos/<int:pk>/", views.ProductDetailView.as_view(), name="product_detail"
+    ),
+    path(
+        "productos/<int:pk>/editar/",
+        views.ProductUpdateView.as_view(),
+        name="product_update",
+    ),
+    path(
+        "productos/<int:pk>/desactivar/",
+        views.ProductDeactivateView.as_view(),
+        name="product_deactivate",
+    ),
+    path(
+        "productos/<int:pk>/reactivar/",
+        views.ProductReactivateView.as_view(),
+        name="product_reactivate",
+    ),
+    path(
+        "productos/<int:pk>/tasas/nueva/",
+        views.RateVersionCreateView.as_view(),
+        name="rate_version_create",
+    ),
+    path(
+        "productos/<int:pk>/tasas/<int:version_pk>/anular/",
+        views.RateVersionVoidView.as_view(),
+        name="rate_version_void",
     ),
 ]

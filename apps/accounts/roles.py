@@ -65,13 +65,32 @@ CATALOG_PERMISSIONS = frozenset(
     for action in ("view", "add", "change")
 )
 
+# Productos de crédito y topes de tasa (SPEC 08, §3.7). El Administrador ve,
+# crea, edita, programa y anula; el Supervisor y Consulta solo ven. Sin `delete`:
+# los productos y los tipos se desactivan, y las versiones se anulan. El
+# Cajero/Cobrador no tiene pantalla: el simulador le ofrecerá los productos por
+# el servicio, sin permisos.
+PRODUCT_MODELS = ("creditproduct", "productrateversion", "ratecaptype", "ratecapvalue")
+
+PRODUCT_PERMISSIONS = frozenset(
+    f"parametros.{action}_{model}"
+    for model in PRODUCT_MODELS
+    for action in ("view", "add", "change")
+)
+PRODUCT_VIEW_PERMISSIONS = frozenset(
+    f"parametros.view_{model}" for model in PRODUCT_MODELS
+)
+
 ROLE_PERMISSIONS: dict[Role, frozenset[str]] = {
     Role.ADMINISTRATOR: (
-        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS | CATALOG_PERMISSIONS
+        USER_MANAGEMENT_PERMISSIONS
+        | PARAMETROS_PERMISSIONS
+        | CATALOG_PERMISSIONS
+        | PRODUCT_PERMISSIONS
     ),
-    Role.SUPERVISOR: frozenset(),
+    Role.SUPERVISOR: PRODUCT_VIEW_PERMISSIONS,
     Role.COLLECTOR: frozenset(),
-    Role.VIEWER: frozenset(),
+    Role.VIEWER: PRODUCT_VIEW_PERMISSIONS,
 }
 
 

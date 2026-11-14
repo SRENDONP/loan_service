@@ -15,6 +15,8 @@ from apps.accounts.models import User
 from apps.accounts.roles import (
     CATALOG_PERMISSIONS,
     PARAMETROS_PERMISSIONS,
+    PRODUCT_PERMISSIONS,
+    PRODUCT_VIEW_PERMISSIONS,
     ROLE_PERMISSIONS,
     USER_MANAGEMENT_PERMISSIONS,
     Role,
@@ -38,6 +40,20 @@ def group_perms(name: str) -> set[str]:
     }
 
 
+def groups_with(perm: str) -> list[str]:
+    """Los roles cuyo grupo tiene `perm`, por nombre."""
+    app_label, codename = perm.split(".", 1)
+    return list(
+        Group.objects.filter(
+            name__in=ROLE_NAMES,
+            permissions__content_type__app_label=app_label,
+            permissions__codename=codename,
+        )
+        .order_by("name")
+        .values_list("name", flat=True)
+    )
+
+
 def test_role_values_are_the_group_names():
     assert set(Role.values) == ROLE_NAMES
     assert set(ROLE_PERMISSIONS) == set(Role)
@@ -48,9 +64,12 @@ def test_migrate_creates_the_four_groups():
     assert ROLE_NAMES <= set(Group.objects.values_list("name", flat=True))
 
 
-def test_administrator_has_user_management_parametros_and_catalog_permissions():
+def test_administrator_has_user_management_parametros_catalog_and_product_permissions():
     assert group_perms("Administrador") == (
-        USER_MANAGEMENT_PERMISSIONS | PARAMETROS_PERMISSIONS | CATALOG_PERMISSIONS
+        USER_MANAGEMENT_PERMISSIONS
+        | PARAMETROS_PERMISSIONS
+        | CATALOG_PERMISSIONS
+        | PRODUCT_PERMISSIONS
     )
     assert len(USER_MANAGEMENT_PERMISSIONS) == 7
     # SPEC 06, §3.8.
@@ -79,25 +98,69 @@ def test_catalog_permissions_cover_the_seven_models_without_delete():
 
 @pytest.mark.parametrize("perm", sorted(CATALOG_PERMISSIONS))
 def test_only_the_administrator_group_has_each_catalog_permission(perm):
-    codename = perm.split(".", 1)[1]
-    groups = Group.objects.filter(
-        name__in=ROLE_NAMES,
-        permissions__content_type__app_label="parametros",
-        permissions__codename=codename,
-    ).values_list("name", flat=True)
-
-    assert list(groups) == ["Administrador"]
+    assert groups_with(perm) == ["Administrador"]
 
 
-def test_only_the_administrator_has_parametros_permissions():
+def test_product_permissions_cover_the_four_models_without_delete():
+    # SPEC 08, §3.7: view, add y change de productos, versiones, tipos y valores.
+    from apps.parametros.models import (
+        CreditProduct,
+        ProductRateVersion,
+        RateCapType,
+        RateCapValue,
+    )
+
+    models = [CreditProduct, ProductRateVersion, RateCapType, RateCapValue]
+    assert PRODUCT_PERMISSIONS == {
+        f"parametros.{action}_{model._meta.model_name}"
+        for model in models
+        for action in ("view", "add", "change")
+    }
+    assert PRODUCT_VIEW_PERMISSIONS == {
+        f"parametros.view_{model._meta.model_name}" for model in models
+    }
+    assert not any("delete_" in perm for perm in PRODUCT_PERMISSIONS)
+
+
+# Matriz de la SPEC 08, §3.7: quién tiene cada permiso de productos y topes.
+PRODUCT_MATRIX = {
+    action: (
+        ["Administrador", "Consulta", "Supervisor"]
+        if action == "view"
+        else ["Administrador"]
+    )
+    for action in ("view", "add", "change")
+}
+
+
+@pytest.mark.parametrize("perm", sorted(PRODUCT_PERMISSIONS))
+def test_product_permission_matrix(perm):
+    action = perm.split(".", 1)[1].split("_", 1)[0]
+
+    assert groups_with(perm) == PRODUCT_MATRIX[action]
+
+
+def test_supervisor_and_viewer_only_see_products_and_rate_caps():
+    assert group_perms("Supervisor") == PRODUCT_VIEW_PERMISSIONS
+    assert group_perms("Consulta") == PRODUCT_VIEW_PERMISSIONS
+
+
+def test_only_the_administrator_can_edit_parametros():
     for role, perms in ROLE_PERMISSIONS.items():
-        has_parametros = any(perm.startswith("parametros.") for perm in perms)
-        assert has_parametros is (role is Role.ADMINISTRATOR)
+        edits_parametros = any(
+            perm.startswith("parametros.") and not perm.startswith("parametros.view_")
+            for perm in perms
+        )
+        assert edits_parametros is (role is Role.ADMINISTRATOR)
 
 
-@pytest.mark.parametrize("name", ["Supervisor", "Cajero/Cobrador", "Consulta"])
-def test_other_roles_have_no_permissions_yet(name):
-    assert group_perms(name) == set()
+def test_only_the_administrator_sees_global_settings_and_catalogs():
+    for perm in PARAMETROS_PERMISSIONS | CATALOG_PERMISSIONS:
+        assert groups_with(perm) == ["Administrador"]
+
+
+def test_collector_has_no_permissions_yet():
+    assert group_perms("Cajero/Cobrador") == set()
 
 
 def test_delete_user_is_in_no_group():
@@ -110,7 +173,7 @@ def test_sync_removes_manual_permission_from_managed_group():
 
     call_command("sync_roles", stdout=StringIO())
 
-    assert group_perms("Consulta") == set()
+    assert group_perms("Consulta") == PRODUCT_VIEW_PERMISSIONS
 
 
 def test_sync_restores_missing_permission():
