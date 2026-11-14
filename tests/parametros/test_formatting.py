@@ -6,7 +6,12 @@ from decimal import Decimal
 import pytest
 from django.template import engines
 
-from apps.parametros.formatting import format_date, format_datetime, format_money
+from apps.parametros.formatting import (
+    format_date,
+    format_datetime,
+    format_money,
+    format_percent,
+)
 from apps.parametros.models import DateFormat
 
 pytestmark = pytest.mark.django_db
@@ -136,3 +141,40 @@ def test_template_filters():
     )
 
     assert html == "$1.234.568|31/12/2026|31/12/2026 14:05|"
+
+
+# Porcentajes (SPEC 08)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (Decimal("25.0200"), "25,02"),
+        (Decimal("10.0000"), "10"),
+        (Decimal("100"), "100"),
+        (Decimal("0.5000"), "0,5"),
+        (Decimal("0"), "0"),
+        (Decimal("9999.9999"), "9.999,9999"),
+        (5, "5"),
+    ],
+)
+def test_format_percent_drops_trailing_zeros(value, expected):
+    assert format_percent(value) == expected
+
+
+def test_format_percent_of_none_is_empty():
+    assert format_percent(None) == ""
+
+
+@pytest.mark.parametrize("value", [25.02, "25", True])
+def test_format_percent_rejects_other_types(value):
+    with pytest.raises(TypeError):
+        format_percent(value)
+
+
+def test_porcentaje_filter():
+    template = engines["django"].from_string(
+        "{% load formato %}{{ value|porcentaje }} % EA"
+    )
+
+    assert template.render({"value": Decimal("25.0200")}) == "25,02 % EA"

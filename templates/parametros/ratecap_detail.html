@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static i18n datatables formato %}
+
+{% comment %}
+  Detalle de un tipo de tope de tasa (SPEC 08, §3.9). Referencias: blank.html,
+  las tarjetas de cards.html y la tabla de tables.html. El valor vigente, el
+  estado de cada valor y las filas llegan calculados desde RateCapDetailView.
+{% endcomment %}
+
+{% block title %}{{ cap_type.name }} · {% translate "Topes de tasa" %}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-2 text-gray-800">{{ cap_type.name }} <small class="h6 align-middle">{{ status }}</small></h1>
+    <div class="mb-2">
+      {% if can_add_value %}
+        <a href="{% url 'parametros:ratecap_value_create' cap_type.pk %}" class="btn btn-sm btn-primary shadow-sm mb-1">
+          <i class="fas fa-plus fa-sm text-white-50"></i> {% translate "Programar nuevo valor" %}
+        </a>
+      {% endif %}
+      {% if can_change %}
+        <a href="{% url 'parametros:ratecap_update' cap_type.pk %}" class="btn btn-sm btn-light shadow-sm mb-1">{% translate "Editar" %}</a>
+      {% endif %}
+      <a href="{% url 'parametros:ratecap_list' %}" class="btn btn-sm btn-light shadow-sm mb-1">{% translate "Volver a los topes" %}</a>
+    </div>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {% if not current and is_usury %}
+    <div class="alert alert-warning" role="alert">
+      <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+      {% translate "La usura no tiene un valor vigente. Carga el valor certificado por la Superintendencia Financiera para poder aprobar créditos." %}
+    </div>
+  {% endif %}
+
+  <div class="row">
+    <!-- Valor vigente -->
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-{% if current %}success{% else %}warning{% endif %} shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-{% if current %}success{% else %}warning{% endif %} text-uppercase mb-1">{% translate "Valor vigente hoy" %}</div>
+              {% if current %}
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ current_value }}</div>
+                <div class="small text-gray-600 mt-1">
+                  {% blocktranslate with date=current.valid_from|fecha %}Desde el {{ date }}{% endblocktranslate %}{% if current.reference %} · {{ current.reference }}{% endif %}
+                </div>
+              {% else %}
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{% translate "Sin valor vigente" %}</div>
+              {% endif %}
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-balance-scale fa-2x text-gray-300" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos del tope -->
+    <div class="col-xl-8 col-md-6 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Datos del tope" %}</h2>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">{% translate "Código" %}</dt>
+            <dd class="col-sm-8"><code>{{ cap_type.code }}</code></dd>
+            <dt class="col-sm-4">{% translate "Aplica a" %}</dt>
+            <dd class="col-sm-8 mb-0">
+              {% if is_usury %}
+                {% translate "Aplica a todos los productos." %}
+              {% elif products %}
+                <ul class="list-unstyled mb-0">
+                  {% for product in products %}
+                    <li><a href="{% url 'parametros:product_detail' product.pk %}">{{ product.name }}</a>{% if not product.is_active %} <span class="badge badge-secondary">{% translate "Inactivo" %}</span>{% endif %}</li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                {% translate "Ningún producto lo usa como tope adicional." %}
+              {% endif %}
+            </dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/datatable.html" with table_id="ratecap-values" title=table_title columns=table_columns rows=table_rows keep_order=True %}
+  <p class="small text-gray-600">{% translate "Los valores no se editan: se programa uno nuevo. Solo se anula el último programado, y solo mientras no rija." %}</p>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

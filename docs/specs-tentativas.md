@@ -8,7 +8,7 @@
 > pasa a ser la `08`, la 007 la `09`, y así hasta la 026 (`28`). La numeración, el alcance y el
 > orden pueden cambiar. La constitución prevalece sobre este documento.
 
-Versión 3 · 2026-11-06 · Incorpora la segunda ronda de respuestas (ver sección 1).
+Versión 3 · 2026-11-06 · Incorpora la segunda ronda de respuestas (ver sección 1). Actualizada el 2026-11-14 con la SPEC 08 implementada.
 
 ---
 
@@ -75,7 +75,7 @@ Las preguntas P1 a P4 y P6 quedaron resueltas con D12 a D16.
 | 004 | Auditoría base (registro) | Núcleo | `auditoria` | 003 |
 | 005 | Parámetros globales (SPEC 06) | Configuración | `parametros` | 004 |
 | 005b | Catálogos y festivos (SPEC 07) | Configuración | `parametros` | 005 |
-| 006 | Productos de crédito y tasas | Configuración | `parametros` | 005 |
+| 006 | Productos de crédito y tasas (SPEC 08) | Configuración | `parametros` | 005 |
 | 007 | Motor I: métodos de interés plano y redondeo | Motor | `amortizacion` | 000 |
 | 008 | Motor II: calendario de vencimientos | Motor | `amortizacion` | 007 |
 | 009 | Motor III: métodos sobre saldo y tasas equivalentes | Motor | `amortizacion` | 008 |
@@ -224,6 +224,22 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - Mora: tolerancia por defecto de 0 días (D6), **porcentaje diario** y tope (D14).
   - **Días de atraso para poder castigar** (D15).
   - Activar y desactivar productos.
+- **SPEC 08 (`specs/08-productos-de-credito-y-tasas.md`), implementada:** los productos de crédito (`CreditProduct`) con los seis métodos y la unidad de su tasa, las condiciones de la §10.2, el historial de tasas (`ProductRateVersion`), el catálogo de tipos de tope (`RateCapType`, con "Usura" de sistema y sin valor) y el historial de valores de cada tope (`RateCapValue`, en % EA). Todo vive en `apps/parametros` y se lee con su servicio. **Cambio frente a esta hoja:** la tasa **no** se compara con la usura en el producto, sino en cada crédito (ver abajo).
+- **Decisiones de la SPEC 08 que afectan a las specs siguientes:**
+  - **La usura bloquea, como dice la §10.3.** Una tasa plana típica del gota a gota (100.000 al 10 % en 20 cuotas diarias) equivale a unos 2.900 % EA, muy por encima del tope legal. La persona lo decidió sabiéndolo: el efecto se verá en el simulador.
+  - **Contrato con el motor (007 a 009, que pasan a ser las SPEC 09 a 11):** los valores de `InterestMethod` (`flat_per_credit`, `flat_monthly_prorated`, `flat_per_installment`, `french`, `german`, `declining_balance`) y de `Periodicity` (`daily`, `weekly`, `biweekly`, `monthly`) son la fuente única. El motor no importa `parametros`: recibe el valor como texto o como su propio enum con los mismos valores, y una prueba de la SPEC 12 compara las dos listas.
+  - **Unidad de la tasa:** la fija el método (`METHOD_RATE_UNIT`) y se guarda como porcentaje (`10.0000` es 10 %). Plano fijo: % por crédito. Plano mensual: % mensual. Los otros cuatro: % por periodo, y el producto admite **una sola** periodicidad, así que la tasa nunca es ambigua.
+  - **Motor I y II (SPEC 09 y 10):** el redondeo de cada crédito sale de `get_product_rounding_rule(producto)`: el del producto si tiene, o el global. La gracia son **periodos sin cuota** al empezar el crédito (`default_grace_periods`, máximo `max_grace_periods`, siempre menos que las cuotas mínimas). No hay gracia de solo interés ni días hasta la primera cuota.
+  - **Motor III (SPEC 11):** convierte el plan real a tasa efectiva anual. Esa EA es la que se compara con los topes.
+  - **Simulador (010, SPEC 12):** ofrece `get_offerable_products()` (activos con tasa vigente hoy), toma la versión de `get_rate_version(producto)` y valida la tasa elegida entre la mínima y la máxima. Compara la EA del plan con `get_applicable_caps(producto)`: la usura siempre, primero, y el tope adicional si el producto tiene uno. Gana el menor valor, y un tope con `value=None` bloquea. Lo usan todos los roles, sin permisos de `parametros`.
+  - **Solicitud y aprobación (014, SPEC 16):** al aprobar, congela en el crédito la versión de tasa (`ForeignKey` a `ProductRateVersion` con `PROTECT`), la tasa elegida y las condiciones del producto que le aplican (mora, tolerancia, castigo, gasto inicial, redondeo). Un cambio posterior del producto no afecta a los créditos existentes. Bloquea la aprobación si algún tope no tiene valor vigente o si la EA lo supera. El límite `max_active_credits_per_client` cuenta solo los créditos del **mismo producto** en Solicitado, Aprobado, Desembolsado, Activo y En mora.
+  - **Desembolso (015, SPEC 17):** descuenta el gasto inicial congelado: fijo en pesos, o porcentaje del monto.
+  - **Mora (018, SPEC 20):** porcentaje diario (`late_fee_daily_rate`) sobre el valor vencido de la cuota, desde el día siguiente a la tolerancia (`late_tolerance_days`, 0 por defecto), con tope en `late_fee_cap_percent` % del valor vencido de cada cuota (D14). Compara el resultado con la usura.
+  - **Castigo (019, SPEC 21):** se puede castigar desde `write_off_min_days_past_due` días de mora, el valor congelado en el crédito.
+  - **Topes y tasas no se corrigen hacia atrás:** una versión rige desde hoy o una fecha futura, y solo se anula la última si todavía no rige. Corregir una versión que ya rige no está en la v1.
+  - **Auditoría:** productos, tasas y valores de topes auditan con `FINANCIAL` (`productos.*` y `topes.*`); los tipos de tope, con las acciones `catalogos.*` (`SECURITY`).
+  - **Permisos:** el Administrador edita; el Supervisor y Consulta solo ven productos y topes (`PRODUCT_VIEW_PERMISSIONS`); el Cajero/Cobrador no tiene pantalla.
+  - **Pendiente fuera de esta spec:** Django 6.1 trae "- Select an option -" sin traducir como opción vacía de los `<select>`. La SPEC 08 lo resolvió en sus formularios; los de otras pantallas (por ejemplo, `/usuarios/`) siguen igual hasta que una spec lo arregle en el renderizador.
 
 ### Bloque D: Motor de amortización (lógica pura, 100 % de cobertura)
 

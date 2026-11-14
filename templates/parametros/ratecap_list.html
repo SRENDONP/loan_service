@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static i18n datatables %}
+
+{% comment %}
+  Listado de los tipos de tope de tasa (SPEC 08, §3.9). Referencia: tables.html.
+  Las celdas, el valor vigente y el aviso de la usura llegan calculados desde
+  RateCapListView.
+{% endcomment %}
+
+{% block title %}{% translate "Topes de tasa" %}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-center justify-content-between mb-2">
+    <h1 class="h3 mb-2 text-gray-800">{% translate "Topes de tasa" %}</h1>
+    {% if can_add %}
+      <a href="{% url 'parametros:ratecap_create' %}" class="btn btn-sm btn-primary shadow-sm mb-2">
+        <i class="fas fa-plus fa-sm text-white-50"></i> {% translate "Nuevo tope" %}
+      </a>
+    {% endif %}
+  </div>
+  <p class="mb-4">{% translate "La usura aplica a todos los productos, y cada producto puede sumar un tope adicional: gana el más estricto. Los valores están en tasa efectiva anual y cada uno rige desde una fecha." %}</p>
+{% endblock %}
+
+{% block content %}
+  {% if usury_missing %}
+    <div class="alert alert-warning" role="alert">
+      <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+      {% translate "La usura no tiene un valor vigente. Carga el valor certificado por la Superintendencia Financiera para poder aprobar créditos." %}
+    </div>
+  {% endif %}
+
+  {% include "includes/datatable.html" with table_id="ratecap-table" title=table_title columns=table_columns rows=table_rows keep_order=True %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

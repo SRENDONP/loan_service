@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Acciones de un producto de crédito (SPEC 08, §3.9), en su fila del listado y
+  en el encabezado del detalle. Recibe `product`. Desactivar y reactivar son
+  POST con confirmación.
+{% endcomment %}
+<div class="d-flex flex-wrap">
+  <a href="{% url 'parametros:product_update' product.pk %}" class="btn btn-sm btn-light mr-1 mb-1">{% translate "Editar" %}</a>
+  {% if product.is_active %}
+    <form method="post" action="{% url 'parametros:product_deactivate' product.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=product.name %}{{ name }} dejará de ofrecerse en las solicitudes nuevas. Los créditos que ya lo usan no cambian. ¿Desactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Desactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Desactivar" %}</button>
+    </form>
+  {% else %}
+    <form method="post" action="{% url 'parametros:product_reactivate' product.pk %}" class="mb-1"
+          data-confirm="{% blocktranslate with name=product.name %}{{ name }} vuelve a ofrecerse en las solicitudes si tiene una tasa vigente. ¿Reactivar?{% endblocktranslate %}"
+          data-confirm-button="{% translate 'Reactivar' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-outline-success">{% translate "Reactivar" %}</button>
+    </form>
+  {% endif %}
+</div>

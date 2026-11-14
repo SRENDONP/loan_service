@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load i18n formato %}
+
+{% comment %}
+  Programar una versión de tasa de un producto (SPEC 08, §3.9). Referencias:
+  blank.html y register.html, con la tarjeta de cards.html. Cada tasa lleva la
+  unidad del producto como sufijo. La versión vigente llega calculada desde
+  RateVersionCreateView.
+{% endcomment %}
+
+{% block title %}{% translate "Programar tasa" %} · {{ product.name }}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">{% blocktranslate with name=product.name %}Programar una tasa de {{ name }}{% endblocktranslate %}</h1>
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <div class="col-xl-6 col-lg-8">
+      <div class="card shadow mb-4">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Nueva tasa" %}</h2>
+        </div>
+        <div class="card-body">
+          <p class="small text-gray-700">
+            {% if current %}
+              {% blocktranslate with rates=current_rates date=current.valid_from|fecha %}Tasa vigente: {{ rates }}, desde el {{ date }}.{% endblocktranslate %}
+            {% else %}
+              {% translate "Este producto no tiene una tasa vigente hoy." %}
+            {% endif %}
+            {% translate "La tasa nueva cierra la anterior el día antes de empezar a regir, y los créditos ya aprobados conservan la suya." %}
+          </p>
+          <form method="post" data-confirm="{% translate 'Una tasa que ya rige no se puede anular. ¿Programar esta tasa?' %}" data-confirm-button="{% translate 'Programar' %}">
+            {% csrf_token %}
+            {{ form }}
+            <button type="submit" class="btn btn-primary">{% translate "Programar tasa" %}</button>
+            <a href="{% url 'parametros:product_detail' product.pk %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

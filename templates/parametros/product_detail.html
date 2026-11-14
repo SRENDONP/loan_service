@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static i18n datatables formato %}
+
+{% comment %}
+  Detalle de un producto de crédito (SPEC 08, §3.9). Referencias: blank.html,
+  las tarjetas de cards.html y la tabla de tables.html. Las condiciones, la
+  versión vigente, el estado de cada versión y los topes llegan calculados
+  desde ProductDetailView: la plantilla no calcula nada.
+{% endcomment %}
+
+{% block title %}{{ product.name }} · {% translate "Productos de crédito" %}{% endblock %}
+
+{% block extra_css %}
+  <link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <div class="d-sm-flex align-items-start justify-content-between mb-2">
+    <h1 class="h3 mb-2 text-gray-800">{{ product.name }} <small class="h6 align-middle">{{ status }}</small></h1>
+    <div class="d-flex flex-wrap">
+      {% if can_change %}
+        {% include "parametros/includes/product_actions.html" %}
+      {% endif %}
+      <a href="{% url 'parametros:product_list' %}" class="btn btn-sm btn-light mb-1 ml-sm-1">{% translate "Volver a los productos" %}</a>
+    </div>
+  </div>
+  {% if product.description %}<p class="mb-4">{{ product.description }}</p>{% else %}<div class="mb-3"></div>{% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="row">
+    <!-- Tasa vigente -->
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card border-left-{% if current %}success{% else %}warning{% endif %} shadow h-100 py-2">
+        <div class="card-body">
+          <div class="row no-gutters align-items-center">
+            <div class="col mr-2">
+              <div class="text-xs font-weight-bold text-{% if current %}success{% else %}warning{% endif %} text-uppercase mb-1">{% translate "Tasa vigente hoy" %}</div>
+              {% if current %}
+                <dl class="mb-0">
+                  {% for label, value in current_rates %}
+                    <div class="d-flex flex-wrap justify-content-between"><dt class="font-weight-normal text-gray-700 mr-2">{{ label }}</dt><dd class="mb-1 font-weight-bold text-gray-800">{{ value }}</dd></div>
+                  {% endfor %}
+                </dl>
+                <div class="small text-gray-600 mt-1">{% blocktranslate with date=current.valid_from|fecha %}Desde el {{ date }}{% endblocktranslate %}</div>
+              {% else %}
+                <div class="h5 mb-0 font-weight-bold text-gray-800">{% translate "Sin tasa vigente" %}</div>
+                <div class="small text-gray-600 mt-1">{% translate "No se ofrece hasta que rija una tasa." %}</div>
+              {% endif %}
+            </div>
+            <div class="col-auto">
+              <i class="fas fa-percent fa-2x text-gray-300" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topes que aplican -->
+    <div class="col-xl-8 col-md-6 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header py-3">
+          <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Topes que aplican" %}</h2>
+        </div>
+        <div class="card-body">
+          {% for cap in caps %}
+            {% if cap.value %}
+              <p class="mb-2"><span class="font-weight-bold text-gray-800">{{ cap.name }}:</span> {{ cap.display }} <span class="small text-gray-600">({% blocktranslate with date=cap.value.valid_from|fecha %}desde el {{ date }}{% endblocktranslate %})</span></p>
+            {% else %}
+              <div class="alert alert-warning mb-2" role="alert">
+                <i class="fas fa-exclamation-triangle mr-1" aria-hidden="true"></i>
+                {% blocktranslate with name=cap.name %}{{ name }} no tiene un valor vigente. Los créditos de este producto no se podrán aprobar hasta que se cargue.{% endblocktranslate %}
+              </div>
+            {% endif %}
+          {% endfor %}
+          <p class="small text-gray-600 mb-0">{% translate "La tasa se valida contra estos topes en cada crédito, con su tasa efectiva anual." %}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tasas -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-2">
+    <h2 class="h5 mb-2 mr-2 text-gray-800">{% translate "Tasas" %}</h2>
+    {% if can_add_rate %}
+      <a href="{% url 'parametros:rate_version_create' product.pk %}" class="btn btn-sm btn-primary shadow-sm mb-2">
+        <i class="fas fa-plus fa-sm text-white-50"></i> {% translate "Programar nueva tasa" %}
+      </a>
+    {% endif %}
+  </div>
+  {% include "includes/datatable.html" with table_id="rate-versions" title=table_title columns=table_columns rows=table_rows keep_order=True %}
+
+  <!-- Condiciones -->
+  <h2 class="h5 mb-3 text-gray-800">{% translate "Condiciones" %}</h2>
+  <div class="row">
+    {% for title, items in conditions %}
+      <div class="col-lg-6">
+        <div class="card shadow mb-4">
+          <div class="card-header py-3">
+            <h3 class="h6 m-0 font-weight-bold text-primary">{{ title }}</h3>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              {% for label, value in items %}
+                <dt class="col-sm-6 font-weight-normal text-gray-700">{{ label }}</dt>
+                <dd class="col-sm-6 text-gray-800">{{ value }}</dd>
+              {% endfor %}
+            </dl>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+  {% datatables_i18n %}
+{% endblock %}

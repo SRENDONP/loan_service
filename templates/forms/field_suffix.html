@@ -1,0 +1,18 @@
+{% comment %}
+  Un campo con su unidad al lado, con el input-group de Bootstrap 4 (SPEC 08).
+  El campo lo pide con `field.template_name = "forms/field_suffix.html"` y la
+  unidad va en `field.suffix` (ver `add_suffix` en apps/parametros/forms.py).
+  El error va dentro del input-group, después del input, para que Bootstrap lo
+  muestre con `.is-invalid ~ .invalid-feedback`.
+{% endcomment %}
+<div class="form-group">
+  {% if field.label %}{{ field.label_tag }}{% endif %}
+  <div class="input-group">
+    {{ field }}
+    <div class="input-group-append">
+      <span class="input-group-text">{{ field.field.suffix }}</span>
+    </div>
+    {% include "forms/field_errors.html" %}
+  </div>
+  {% include "forms/help_text.html" %}
+</div>

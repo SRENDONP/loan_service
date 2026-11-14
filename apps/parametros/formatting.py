@@ -1,5 +1,5 @@
 """
-Formato de dinero y fechas para mostrar (SPEC 06, §3.6).
+Formato de dinero, fechas y porcentajes para mostrar (SPEC 06, §3.6, y SPEC 08).
 
 La moneda, sus decimales y el formato de fecha salen de los parámetros
 globales. Los separadores de miles y de decimales y el formato de la hora salen
@@ -86,3 +86,28 @@ def _lowercase_month(date_format: str, value: date) -> str:
 
 def _local(value: datetime) -> datetime:
     return timezone.localtime(value) if timezone.is_aware(value) else value
+
+
+def format_percent(value: Decimal | int | None) -> str:
+    """
+    Un porcentaje sin los ceros que sobran, por ejemplo `25,02` o `10` (SPEC 08).
+
+    Solo el número: quien lo muestra agrega la unidad ("% EA", "% mensual").
+    Nunca se convierte a `float`.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, bool) or not isinstance(value, (Decimal, int)):
+        raise TypeError(
+            f"format_percent recibe Decimal o int, no {type(value).__name__}."
+        )
+    number = Decimal(value).normalize()
+    decimals = max(-number.as_tuple().exponent, 0)
+    return numberformat.format(
+        number,
+        decimal_sep=formats.get_format("DECIMAL_SEPARATOR", lang=LOCALE),
+        decimal_pos=decimals,
+        grouping=formats.get_format("NUMBER_GROUPING", lang=LOCALE),
+        thousand_sep=formats.get_format("THOUSAND_SEPARATOR", lang=LOCALE),
+        force_grouping=True,
+    )

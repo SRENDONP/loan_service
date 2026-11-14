@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% comment %}
+  Crear o editar un producto de crédito (SPEC 08, §3.9). Referencias: blank.html
+  y register.html, con las tarjetas de cards.html: una por grupo de condiciones.
+  Al crear, una tarjeta más con la tasa inicial. Al editar, el método (y, con
+  tasa por periodo, la periodicidad) se muestran como solo lectura. Los campos
+  los dibuja el renderizador de formularios del proyecto.
+{% endcomment %}
+
+{% block title %}{% if creating %}{% translate "Nuevo producto" %}{% else %}{% translate "Editar producto" %}{% endif %} · {% translate "Productos de crédito" %}{% endblock %}
+
+{% block page_heading %}
+  <!-- Page Heading -->
+  <h1 class="h3 mb-4 text-gray-800">
+    {% if creating %}
+      {% translate "Nuevo producto de crédito" %}
+    {% else %}
+      {% blocktranslate with name=product.name %}Editar {{ name }}{% endblocktranslate %}
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors or rate_form.non_field_errors %}
+      <div class="alert alert-danger" role="alert">
+        {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+        {% for error in rate_form.non_field_errors %}<br>{{ error }}{% endfor %}
+      </div>
+    {% elif form.errors or rate_form.errors %}
+      <div class="alert alert-danger" role="alert">{% translate "Revisa los campos marcados." %}</div>
+    {% endif %}
+
+    <div class="row">
+      {% for title, fields in form.groups %}
+        <div class="col-lg-6">
+          <div class="card shadow mb-4">
+            <div class="card-header py-3">
+              <h2 class="h6 m-0 font-weight-bold text-primary">{{ title }}</h2>
+            </div>
+            <div class="card-body">
+              {% if forloop.counter == 2 and not creating %}
+                <div class="form-group">
+                  <span class="d-block mb-2">{% translate "Método de interés" %}</span>
+                  <p class="form-control-plaintext py-0 mb-0">{{ product.get_interest_method_display }} <span class="text-gray-600">({{ product.rate_unit.label }})</span></p>
+                  <small class="form-text text-muted">{% translate "El método no cambia después de crear el producto: sus tasas están en esa unidad. Para otro método, crea otro producto." %}</small>
+                </div>
+                {% if periodicity_locked %}
+                  <div class="form-group">
+                    <span class="d-block mb-2">{% translate "Periodicidad" %}</span>
+                    <p class="form-control-plaintext py-0 mb-0">{{ periodicities }}</p>
+                    <small class="form-text text-muted">{% translate "Con tasa por periodo, la periodicidad no cambia." %}</small>
+                  </div>
+                {% endif %}
+              {% endif %}
+              {% for field in fields %}
+                {{ field.as_field_group }}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if rate_form %}
+        <div class="col-lg-6">
+          <div class="card shadow mb-4 border-left-primary">
+            <div class="card-header py-3">
+              <h2 class="h6 m-0 font-weight-bold text-primary">{% translate "Tasa inicial" %}</h2>
+            </div>
+            <div class="card-body">
+              <p class="small text-gray-700">{% translate "Las tasas van en la unidad del método: plano fijo, % por crédito; plano mensual, % mensual; los demás, % por periodo." %}</p>
+              {% for field in rate_form %}
+                {{ field.as_field_group }}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="mb-4">
+      <button type="submit" class="btn btn-primary">
+        {% if creating %}{% translate "Crear producto" %}{% else %}{% translate "Guardar cambios" %}{% endif %}
+      </button>
+      <a href="{% if creating %}{% url 'parametros:product_list' %}{% else %}{% url 'parametros:product_detail' product.pk %}{% endif %}" class="btn btn-light">{% translate "Cancelar" %}</a>
+    </div>
+  </form>
+{% endblock %}

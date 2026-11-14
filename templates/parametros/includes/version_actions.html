@@ -1,0 +1,12 @@
+{% load i18n %}
+{% comment %}
+  Acción de una fila de un historial de vigencia (SPEC 08, §3.9): anular la
+  última versión programada, con POST y confirmación. Recibe `void_url` y
+  `confirm`, el texto de la confirmación. Sirve a las tasas y a los topes.
+{% endcomment %}
+<form method="post" action="{{ void_url }}" class="mb-1"
+      data-confirm="{{ confirm }}"
+      data-confirm-button="{% translate 'Anular' %}">
+  {% csrf_token %}
+  <button type="submit" class="btn btn-sm btn-outline-danger">{% translate "Anular" %}</button>
+</form>
