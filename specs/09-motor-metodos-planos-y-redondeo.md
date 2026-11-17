@@ -420,6 +420,21 @@ def build_schedule(data: ScheduleInput) -> Schedule: ...
 - **No:** dejar el 100 % solo como criterio de aceptación. Nada impediría que bajara después.
 - **Sí:** la malla de invariantes se escribe con `pytest.mark.parametrize` y ciclos, sin librerías nuevas. Agregar una librería de pruebas por propiedades (como Hypothesis) necesitaría su propia decisión.
 
+### 6.1 Decisiones tomadas durante la implementación
+
+- **Sí:** un `float` en el múltiplo da `invalid_type`, no `invalid_rounding`. El criterio de aceptación lo pide así, y es la regla general de la §3.3: primero se revisa el tipo y después el valor.
+- **Sí:** `NaN` e `Infinity` dan `invalid_type`. No son números finitos, y sin esa revisión la comparación con 0 lanzaba una excepción de `decimal`.
+- **Sí:** la precisión de la moneda queda en su forma canónica. `Decimal("1.00")` se acepta, pero se guarda como `Decimal("1")`, para que la tabla no salga con decimales que la moneda no tiene.
+- **Sí:** las reglas se revisan en un orden fijo: primero la precisión, de la que dependen el monto y el múltiplo, y después el monto, la tasa, las cuotas, el método, la periodicidad y el redondeo. Solo se informa el primer error.
+- **Sí:** los validadores privados de `engine.py` reciben `object`, no `Any`, porque aceptan cualquier valor para rechazar lo que no sirve.
+- **Sí:** los módulos del motor se importan entre sí con imports relativos. Así ninguno importa `apps.*`, y la prueba de pureza solo revisa los imports absolutos.
+- **Sí:** `StrategyRegistry` es una clase, y `register`, `get_strategy` y `registered_methods` usan su instancia global. Las pruebas crean un registro propio para no tocar el global, como el `MenuRegistry` de la SPEC 02.
+- **Sí:** `RoundingError` sale con `field=None`. El error viene de la combinación de monto, cuotas y regla, no de un solo campo.
+- **Sí:** todos los valores de la tabla pasan por `quantize_money`, así que tienen el exponente de la precisión. Con `0.01`, una cuota de 5.350 sale como `5350.00`.
+- **Sí:** "negativos de cero" en las pruebas de redondeo (§3.10) se leyó como que el redondeo nunca devuelve `-0`.
+- **Sí:** la malla de invariantes recorre sus 48.384 combinaciones con ciclos dentro de 6 pruebas parametrizadas (método × precisión). Como parámetros de pytest, la recolección sería muy lenta. El archivo tarda unos 20 s, casi todo por las combinaciones de 999 cuotas.
+- **Sí:** la prueba aparte de 999 cuotas usa una tasa de 0,5 % y redondeo hacia abajo. Con 999 cuotas, el capital regular es de unos 12.358 pesos, y redondear la cuota hacia arriba más de 12 pesos ya da `overpaid`. El motor tenía razón: la configuración de la prueba era la que no tenía solución.
+
 ---
 
 ## 7. Riesgos identificados
