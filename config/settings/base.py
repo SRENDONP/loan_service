@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     "apps.auditoria",
     # Parámetros globales del negocio (SPEC 06).
     "apps.parametros",
+    # Motor de amortización, lógica pura sin modelos (SPEC 09).
+    "apps.amortizacion",
 ]
 
 # Modelo de usuario propio (SPEC 03). Cambiarlo con datos reales es muy costoso.
