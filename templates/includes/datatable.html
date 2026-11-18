@@ -20,6 +20,9 @@
       <script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
       {% datatables_i18n %}   (con {% load datatables %})
     {% endblock %}
+
+  A diferencia de tables.html, la tabla no tiene <tfoot>: no repite los
+  encabezados en la última fila (decisión aprobada por la persona).
 {% endcomment %}
 <!-- DataTable -->
 <div class="card shadow mb-4">
@@ -34,11 +37,6 @@
             {% for column in columns %}<th>{{ column }}</th>{% endfor %}
           </tr>
         </thead>
-        <tfoot>
-          <tr>
-            {% for column in columns %}<th>{{ column }}</th>{% endfor %}
-          </tr>
-        </tfoot>
         <tbody>
           {% for row in rows %}
             <tr>

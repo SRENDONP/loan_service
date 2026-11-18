@@ -229,7 +229,9 @@ def test_datatable_include_renders_table_structure():
         html,
     )
     assert '<h6 class="m-0 font-weight-bold text-primary" id="demo-title">' in html
-    assert html.count("<th>Nombre</th>") == 2  # thead y tfoot
+    # Los encabezados van una sola vez: sin <tfoot> que los repita al final.
+    assert html.count("<th>Nombre</th>") == 1
+    assert "<tfoot>" not in html
     assert "<td>$ 1.000</td>" in html
     assert "<td>&lt;b&gt;Luis&lt;/b&gt;</td>" in html  # los valores se escapan
 
@@ -268,7 +270,7 @@ def test_components_page_available_with_debug(auth_client, settings):
     html = response.content.decode()
     for level in ("success", "info", "warning", "danger"):
         assert f"alert alert-{level} alert-dismissible" in html
-    assert html.count("<tr>") == 15 + 2  # filas + thead + tfoot
+    assert html.count("<tr>") == 15 + 1  # filas + thead, sin tfoot
     assert 'id="datatables-i18n"' in html
     assert "vendor/datatables/jquery.dataTables.min.js" in html
     assert "vendor/datatables/dataTables.bootstrap4.min.css" in html
