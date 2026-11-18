@@ -147,7 +147,7 @@ Lo que dejó la SPEC 02, y que toda pantalla nueva reutiliza:
 - **Catálogo:** antes de construir una pantalla, revisa `/componentes/` (solo con DEBUG). Ahí están todos los componentes compartidos.
 - **Formularios:** `{{ form }}` ya produce las clases de Bootstrap 4 gracias a `apps.core.forms.BootstrapFormRenderer` y a `templates/forms/`. No agregues django-crispy-forms ni clases a mano en los widgets.
 - **Mensajes:** usa `django.contrib.messages`; `base.html` los muestra como alertas.
-- **Tablas:** usa `includes/datatable.html`. Su comentario dice qué recursos cargar en `extra_css` y `extra_js`, incluido `{% datatables_i18n %}`. DataTables ordena por la primera columna al cargar; si el listado tiene su propio orden, pasa `keep_order=True` (SPEC 07). Una fecha con formato `d/m/Y` no se ordena bien como texto: pon antes la fecha ISO en un `<span class="d-none">`, como la lista de festivos.
+- **Tablas:** usa `includes/datatable.html`. Su comentario dice qué recursos cargar en `extra_css` y `extra_js`, incluido `{% datatables_i18n %}`. DataTables ordena por la primera columna al cargar; si el listado tiene su propio orden, pasa `keep_order=True` (SPEC 07). Una fecha con formato `d/m/Y` no se ordena bien como texto: pon antes la fecha ISO en un `<span class="d-none">`, como la lista de festivos. A diferencia de `tables.html`, la tabla no tiene `<tfoot>`: los encabezados no se repiten en la última fila (aprobado por la persona).
 - **Confirmación:** agrega `data-confirm` a un `<form>` para que pida confirmación. La protección real (permisos y validación) sigue en el servidor.
 - **Nombre del negocio:** sale del context processor `apps.core.context_processors.branding`. No lo escribas fijo en las plantillas.
 

@@ -25,3 +25,6 @@ htmlcov/
 # IDE y configuración local de Claude Code
 .idea/
 .claude/settings.local.json
+
+# Capturas y registros del MCP de Playwright (verificaciones en el navegador)
+.playwright-mcp/
