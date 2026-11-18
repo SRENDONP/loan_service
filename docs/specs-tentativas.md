@@ -8,7 +8,7 @@
 > pasa a ser la `08`, la 007 la `09`, y así hasta la 026 (`28`). La numeración, el alcance y el
 > orden pueden cambiar. La constitución prevalece sobre este documento.
 
-Versión 3 · 2026-11-06 · Incorpora la segunda ronda de respuestas (ver sección 1). Actualizada el 2026-11-14 con la SPEC 08 implementada.
+Versión 3 · 2026-11-06 · Incorpora la segunda ronda de respuestas (ver sección 1). Actualizada el 2026-11-14 con la SPEC 08 implementada y el 2026-11-17 con la SPEC 09 implementada.
 
 ---
 
@@ -227,7 +227,7 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
 - **SPEC 08 (`specs/08-productos-de-credito-y-tasas.md`), implementada:** los productos de crédito (`CreditProduct`) con los seis métodos y la unidad de su tasa, las condiciones de la §10.2, el historial de tasas (`ProductRateVersion`), el catálogo de tipos de tope (`RateCapType`, con "Usura" de sistema y sin valor) y el historial de valores de cada tope (`RateCapValue`, en % EA). Todo vive en `apps/parametros` y se lee con su servicio. **Cambio frente a esta hoja:** la tasa **no** se compara con la usura en el producto, sino en cada crédito (ver abajo).
 - **Decisiones de la SPEC 08 que afectan a las specs siguientes:**
   - **La usura bloquea, como dice la §10.3.** Una tasa plana típica del gota a gota (100.000 al 10 % en 20 cuotas diarias) equivale a unos 2.900 % EA, muy por encima del tope legal. La persona lo decidió sabiéndolo: el efecto se verá en el simulador.
-  - **Contrato con el motor (007 a 009, que pasan a ser las SPEC 09 a 11):** los valores de `InterestMethod` (`flat_per_credit`, `flat_monthly_prorated`, `flat_per_installment`, `french`, `german`, `declining_balance`) y de `Periodicity` (`daily`, `weekly`, `biweekly`, `monthly`) son la fuente única. El motor no importa `parametros`: recibe el valor como texto o como su propio enum con los mismos valores, y una prueba de la SPEC 12 compara las dos listas.
+  - **Contrato con el motor (007 a 009, que pasan a ser las SPEC 09 a 11):** los valores de `InterestMethod` (`flat_per_credit`, `flat_monthly_prorated`, `flat_per_installment`, `french`, `german`, `declining_balance`) y de `Periodicity` (`daily`, `weekly`, `biweekly`, `monthly`) son la fuente única. El motor no importa `parametros`: recibe el valor como texto o como su propio enum con los mismos valores, y `tests/amortizacion/test_contract.py` (SPEC 09) compara las listas.
   - **Unidad de la tasa:** la fija el método (`METHOD_RATE_UNIT`) y se guarda como porcentaje (`10.0000` es 10 %). Plano fijo: % por crédito. Plano mensual: % mensual. Los otros cuatro: % por periodo, y el producto admite **una sola** periodicidad, así que la tasa nunca es ambigua.
   - **Motor I y II (SPEC 09 y 10):** el redondeo de cada crédito sale de `get_product_rounding_rule(producto)`: el del producto si tiene, o el global. La gracia son **periodos sin cuota** al empezar el crédito (`default_grace_periods`, máximo `max_grace_periods`, siempre menos que las cuotas mínimas). No hay gracia de solo interés ni días hasta la primera cuota.
   - **Motor III (SPEC 11):** convierte el plan real a tasa efectiva anual. Esa EA es la que se compara con los topes.
@@ -252,6 +252,16 @@ Las specs 007 a 009 no dependen de Django, así que se pueden trabajar en parale
   - Redondeo configurable y ajuste de la última cuota.
   - Totales de capital, interés y costo total.
 - **Casos límite:** 1 cuota, tasa cero, montos muy pequeños, la suma del capital igual al monto y saldo final igual a 0.
+- **SPEC 09 (`specs/09-motor-metodos-planos-y-redondeo.md`), implementada:** la app `apps/amortizacion`, lógica pura sin modelos, con el contrato (`ScheduleInput`, `Installment`, `Schedule` y enums propios), la validación de la entrada, el registro de estrategias, el redondeo y los tres métodos planos. El 100 % de cobertura lo exige un paso propio del CI.
+- **Decisiones de la SPEC 09 que afectan a las specs siguientes:**
+  - **Prorrateo:** el plano mensual usa meses de 30 días (diaria 1/30, semanal 7/30, quincenal 1/2 y mensual 1), no los días reales del plazo. El interés no depende del calendario.
+  - **Redondeo:** el interés total se redondea una sola vez a la precisión de la moneda. Las cuotas regulares se redondean al múltiplo de la `RoundingRule`, el interés de cada cuota regular se trunca hacia abajo y la última cuota absorbe todas las diferencias. Con una sola cuota no se aplica el múltiplo.
+  - **Redondeo sin solución:** el motor lanza `RoundingError` (`zero_payment`, `negative_principal`, `overpaid` o `zero_last_payment`) y nunca baja en silencio a otra precisión. Con muchas cuotas, redondear hacia arriba paga de más con facilidad (con 999 cuotas diarias, más de unos 12 pesos por cuota ya da `overpaid`).
+  - **Gracia (008, SPEC 10):** no es parte de la entrada del motor I ni cambia el interés de los métodos planos. Solo atrasa el calendario.
+  - **Calendario (008, SPEC 10):** la tabla de la SPEC 09 no tiene fechas. La SPEC 10 decide cómo unirlas sin cambiar los valores que calcula el motor I.
+  - **Métodos sobre saldo (009, SPEC 11):** el enum del motor ya trae los seis valores. La SPEC 11 solo registra sus estrategias con `@register`, cada una armando la tabla completa, y puede agregar campos a `ScheduleInput` con valor por defecto.
+  - **Simulador (010, SPEC 12):** arma `ScheduleInput` con el método y la periodicidad del producto (como texto o enum), la tasa elegida, `get_product_rounding_rule(producto)` convertido al `RoundingRule` del motor y `money_precision` desde `currency_decimals` (`0` → `Decimal("1")`, `2` → `Decimal("0.01")`). Los errores traen `code` y `field` con un mensaje en español sin `gettext`: el simulador traduce el `code`. La prueba que compara los enums del motor con los de `parametros` ya existe (`tests/amortizacion/test_contract.py`).
+  - **Pureza:** solo `apps.py` importa Django; los módulos del motor se importan entre sí con imports relativos.
 
 #### 008 · Motor II: calendario de vencimientos
 - **Incluye:**

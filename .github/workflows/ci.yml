@@ -65,3 +65,7 @@ jobs:
 
       - name: Pruebas
         run: uv run pytest --cov
+
+      # El motor de amortización exige 100 % de cobertura (constitución §15.1, SPEC 09).
+      - name: Cobertura del motor
+        run: uv run pytest tests/amortizacion --cov=apps/amortizacion --cov-report=term-missing --cov-fail-under=100
